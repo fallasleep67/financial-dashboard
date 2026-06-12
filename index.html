@@ -973,7 +973,7 @@ const DEBTS_DEFAULT = [
 const BUDGET_DEFAULT = {
   needs: [
     { name:'Rent',                    amount:943.00 },
-    { name:'Groceries',               amount:200.00 },
+    { name:'Groceries',               amount:215.00 },
     { name:'Gas / Transportation',    amount:80.00  },
     { name:'Utilities (Gas / Water)', amount:145.00 },
     { name:'Electric',                amount:60.00  },
@@ -990,11 +990,11 @@ const BUDGET_DEFAULT = {
     { name:'Extra Debt Payment (Citi)',   amount:400.00 },
   ],
   save: [
-    { name:'Emergency Fund', amount:90.36 },
+    { name:'Emergency Fund', amount:50.00 },
   ],
   wants: [
-    { name:'Restaurants & Entertainment', amount:30.00 },
-    { name:'Personal / Misc',             amount:20.00 },
+    { name:'Restaurants & Entertainment', amount:50.00 },
+    { name:'Personal / Misc',             amount:25.36 },
   ],
 };
 
@@ -1032,6 +1032,7 @@ function show(id, btn) {
 // =====================================================================
 const fmt = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const fmtK = n => n >= 1000 ? '$' + (n/1000).toFixed(1) + 'K' : fmt(n);
+const fmtRate = n => { const r = Math.round(n*100)/100; return (r % 1 === 0) ? r.toFixed(0) : r.toFixed(2).replace(/0$/,''); };
 
 // =====================================================================
 // OVERVIEW
@@ -1075,7 +1076,7 @@ function renderOverview() {
     <div class="debt-row">
       <div class="debt-name"><span class="priority-dot ${dotClass}"></span>${d.name}</div>
       <div class="debt-balance">${fmt(d.balance)}</div>
-      <div><span class="debt-rate ${rateClass}">${d.rate}%</span></div>
+      <div><span class="debt-rate ${rateClass}">${fmtRate(d.rate)}%</span></div>
       <div class="debt-payment">${fmt(d.minPayment)}/mo</div>
       <div>
         <div class="progress-track"><div class="progress-fill" style="width:${paidPct}%;background:${paidPct>50?'var(--green)':'var(--accent)'}"></div></div>
@@ -1106,7 +1107,7 @@ function renderDebtDetail() {
         <div id="bal-display-${d.id}" class="debt-balance" style="cursor:pointer;" onclick="editBalance('${d.id}')">${fmt(d.balance)}</div>
         <input id="bal-input-${d.id}" class="balance-input" style="display:none;" type="number" value="${d.balance}" onblur="saveBalance('${d.id}')" onkeydown="if(event.key==='Enter')saveBalance('${d.id}')">
       </div>
-      <div><span class="debt-rate ${rateClass}">${d.rate}%</span></div>
+      <div><span class="debt-rate ${rateClass}">${fmtRate(d.rate)}%</span></div>
       <div class="debt-payment">${fmt(d.minPayment)}/mo</div>
       <div>
         <div class="progress-track"><div class="progress-fill" style="width:${paidPct}%;background:${paidPct>50?'var(--green)':'var(--accent)'}"></div></div>
@@ -1359,47 +1360,123 @@ function saveNotionConfig() {
   alert('Configuration saved. Click "Sync Notion" in the top bar to pull your data.');
 }
 
+// Normalize a name for fuzzy matching: lowercase, strip parenthetical/arrow suffixes, collapse whitespace
+function normName(s) {
+  return s.toLowerCase()
+    .replace(/\(.*?\)/g, '')      // remove (Citi), (min), etc.
+    .replace(/[→\u2192].*$/g, '')  // remove "→ Citi" arrow suffixes
+    .replace(/\bmin(imum)?\b/g, '')
+    .replace(/[^a-z0-9 ]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function findBudgetItem(category) {
+  const target = normName(category);
+  for(const cat of ['needs','debt','save','wants']) {
+    for(const item of budget[cat]) {
+      const itemNorm = normName(item.name);
+      if(itemNorm === target || itemNorm.split(' ')[0] === target.split(' ')[0]) {
+        return item;
+      }
+    }
+  }
+  return null;
+}
+
 async function syncNotion() {
-  if(!notionConfig.debtsDb) { alert('Please add your Debts database ID in the Notion Setup tab first.'); return; }
+  if(!notionConfig.debtsDb && !notionConfig.budgetDb && !notionConfig.logDb) {
+    alert('Please add at least one Notion database ID in the Notion Setup tab first.');
+    return;
+  }
   const btn = document.getElementById('syncBtn');
   btn.textContent = '↻ Syncing...';
   try {
+    const databaseIds = {};
+    if(notionConfig.debtsDb)  databaseIds.debts  = notionConfig.debtsDb;
+    if(notionConfig.budgetDb) databaseIds.budget = notionConfig.budgetDb;
+    if(notionConfig.logDb)    databaseIds.log    = notionConfig.logDb;
+
     const res = await fetch('/.netlify/functions/notion-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ databaseId: notionConfig.debtsDb })
+      body: JSON.stringify({ databaseIds })
     });
     if(!res.ok) {
       const err = await res.json().catch(()=>({}));
       throw new Error(err.error || 'Server error ' + res.status);
     }
-    const data = await res.json();
-    data.results.forEach(page => {
-      const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
-      const balance = page.properties['Balance']?.number;
-      const rateRaw = page.properties['Interest Rate']?.number;
-      const minPay  = page.properties['Minimum Payment']?.number;
-      if(!name) return;
-      // Match on exact name, or on first word (handles "SoFi Loan" -> "SoFi Personal Loan" renames)
-      let d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
-      if(!d) {
-        const firstWord = name.toLowerCase().split(' ')[0];
-        d = debts.find(x => x.name.toLowerCase().split(' ')[0] === firstWord);
-      }
-      if(d) {
-        if(balance != null) d.balance = balance;
-        if(rateRaw != null) d.rate = rateRaw <= 1 ? rateRaw * 100 : rateRaw; // handle percent stored as 0.1475 or 14.75
-        if(minPay != null) d.minPayment = minPay;
-        if(name) d.name = name; // keep dashboard name in sync with Notion (e.g. refinance renames)
-      }
-    });
+    const { results, errors } = await res.json();
+
+    // ---- DEBTS ----
+    if(results.debts) {
+      results.debts.forEach(page => {
+        const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
+        const balance = page.properties['Balance']?.number;
+        const rateRaw = page.properties['Interest Rate']?.number;
+        const minPay  = page.properties['Minimum Payment']?.number;
+        if(!name) return;
+        let d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
+        if(!d) {
+          const firstWord = name.toLowerCase().split(' ')[0];
+          d = debts.find(x => x.name.toLowerCase().split(' ')[0] === firstWord);
+        }
+        if(d) {
+          if(balance != null) d.balance = balance;
+          if(rateRaw != null) d.rate = Math.round((rateRaw <= 1 ? rateRaw * 100 : rateRaw) * 100) / 100;
+          if(minPay != null) d.minPayment = minPay;
+          if(name) d.name = name;
+        }
+      });
+    }
+
+    // ---- BUDGET ----
+    if(results.budget) {
+      results.budget.forEach(page => {
+        const category = page.properties['Category']?.title?.[0]?.plain_text || '';
+        const amount   = page.properties['Amount']?.number;
+        if(!category || amount == null) return;
+        const item = findBudgetItem(category);
+        if(item) item.amount = amount;
+      });
+    }
+
+    // ---- MONTHLY LOG ----
+    if(results.log) {
+      const newLogs = results.log.map(page => {
+        const month  = page.properties['Month']?.title?.[0]?.plain_text || '';
+        const hiDebt = page.properties['Total Hi-Interest Debt']?.number || 0;
+        const extra  = page.properties['Extra Payment']?.number || 0;
+        const side   = page.properties['Side Income']?.number || 0;
+        return { month, hiDebt, extra, side };
+      }).filter(l => l.month);
+      // Sort chronologically if possible (e.g. "May 2026" -> parseable)
+      newLogs.sort((a,b) => {
+        const da = new Date(a.month), db = new Date(b.month);
+        if(!isNaN(da) && !isNaN(db)) return da - db;
+        return a.month.localeCompare(b.month);
+      });
+      if(newLogs.length) logs = newLogs;
+    }
+
     saveState();
-    document.getElementById('notionBadge').textContent = '● Synced';
-    document.getElementById('notionBadge').className = 'badge connected';
+
+    const errKeys = Object.keys(errors || {});
+    if(errKeys.length) {
+      document.getElementById('notionBadge').textContent = '● Partial sync';
+      document.getElementById('notionBadge').className = 'badge disconnected';
+      console.warn('Sync errors:', errors);
+    } else {
+      document.getElementById('notionBadge').textContent = '● Synced';
+      document.getElementById('notionBadge').className = 'badge connected';
+    }
+
     btn.textContent = '✓ Synced';
     btn.className = 'sync-btn synced';
     setTimeout(()=>{ btn.textContent='↻ Sync Notion'; btn.className='sync-btn'; }, 3000);
-    renderOverview(); renderDebtDetail();
+
+    renderOverview(); renderDebtDetail(); renderBudget(); renderLog();
+    if(errKeys.length) alert('Synced with some issues: ' + errKeys.map(k=>k+': '+errors[k]).join('; '));
   } catch(e) {
     btn.textContent = '↻ Sync Notion';
     alert('Sync failed: ' + e.message);
