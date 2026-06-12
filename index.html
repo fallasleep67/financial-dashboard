@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Recovery Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --surface2: #1a1e28;
+  --surface3: #222736;
+  --border: #2a2f3d;
+  --border2: #353b50;
+  --text: #e8eaf0;
+  --text2: #9198aa;
+  --text3: #5c6275;
+  --accent: #e8613a;
+  --accent2: #f0a070;
+  --gold: #d4a843;
+  --green: #4caf82;
+  --green2: #2d7a5a;
+  --blue: #4a8fd4;
+  --red: #d44a4a;
+  --purple: #8b6dd4;
+  --glow: rgba(232,97,58,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCANLINE OVERLAY */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* TOP HEADER */
+.header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.header-left { display: flex; align-items: baseline; gap: 1.5rem; }
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.header-date {
+  font-size: 0.7rem;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+}
+
+.header-right { display: flex; align-items: center; gap: 1rem; }
+
+.sync-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  padding: 0.4rem 0.9rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sync-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sync-btn.synced { border-color: var(--green); color: var(--green); }
+
+/* NAV */
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+
+nav button {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.5rem;
+  border: none;
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+nav button:hover { color: var(--text2); }
+nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* MAIN */
+main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+section { display: none; animation: fadeUp 0.25s ease; }
+section.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* STAT GRID */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card.danger::before { background: var(--accent); }
+.stat-card.warn::before { background: var(--gold); }
+.stat-card.good::before { background: var(--green); }
+.stat-card.info::before { background: var(--blue); }
+
+.stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 0.6rem;
+}
+
+.stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.stat-card.danger .stat-value { color: var(--accent); }
+.stat-card.warn .stat-value { color: var(--gold); }
+.stat-card.good .stat-value { color: var(--green); }
+.stat-card.info .stat-value { color: var(--blue); }
+
+.stat-sub { font-size: 0.65rem; color: var(--text3); }
+
+/* SECTION HEADER */
+.sec-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.sec-sub { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* DEBT CARDS */
+.debt-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2rem; }
+
+.debt-row {
+  background: var(--surface);
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  transition: background 0.15s;
+}
+.debt-row:hover { background: var(--surface2); }
+
+.debt-row.header-row {
+  background: var(--surface2);
+  padding: 0.6rem 1.5rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.debt-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.priority-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.p1 { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.p2 { background: var(--gold); }
+.p3 { background: var(--blue); }
+.p4 { background: var(--green); }
+
+.debt-balance { font-size: 0.9rem; font-weight: 500; }
+.debt-rate {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--surface3);
+  display: inline-block;
+}
+.high-rate { color: var(--accent); }
+.med-rate { color: var(--gold); }
+.low-rate { color: var(--green); }
+
+.debt-payment { font-size: 0.8rem; color: var(--text2); }
+
+/* PROGRESS BAR */
+.progress-wrap { margin-top: 0.5rem; }
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--text3);
+  margin-bottom: 0.3rem;
+}
+.progress-track {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* EDIT BALANCE */
+.edit-balance-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  padding: 0.3rem 0.6rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.edit-balance-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.balance-input {
+  background: var(--surface3);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 0.3rem 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  width: 110px;
+  outline: none;
+}
+
+/* AVALANCHE SECTION */
+.strategy-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.strategy-card.gold { border-left-color: var(--gold); }
+.strategy-card.green { border-left-color: var(--green); }
+.strategy-card.blue { border-left-color: var(--blue); }
+
+.strategy-card h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.strategy-card p { font-size: 0.8rem; color: var(--text2); line-height: 1.7; }
+
+/* BUDGET */
+.budget-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+@media(max-width:600px){.budget-grid{grid-template-columns:1fr;}}
+
+.budget-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.budget-section-header {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+}
+
+.budget-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  gap: 1rem;
+}
+.budget-line:last-child { border-bottom: none; }
+.budget-line .bl-name { color: var(--text2); flex: 1; }
+
+.budget-line input {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  width: 90px;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.budget-line input:focus { border-color: var(--accent); }
+
+.budget-total {
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--surface2);
+  border-top: 1px solid var(--border2);
+}
+
+.surplus { color: var(--green); }
+.deficit { color: var(--accent); }
+
+/* ALLOCATION BAR */
+.alloc-bar-wrap { margin: 1.5rem 0; }
+.alloc-bar-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 0.5rem;
+}
+.alloc-bar {
+  height: 32px;
+  display: flex;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface3);
+}
+.alloc-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.8);
+  overflow: hidden;
+  transition: width 0.6s ease;
+  white-space: nowrap;
+}
+.alloc-legend {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.6rem;
+}
+.al-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.65rem; color: var(--text3); }
+.al-dot { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+
+/* PAYOFF TIMELINE */
+.timeline-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tl-item {}
+.tl-item-label { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 0.3rem; }
+.tl-item-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--green);
+}
+.tl-item-sub { font-size: 0.65rem; color: var(--text3); margin-top: 0.15rem; }
+
+/* CHART */
+.chart-area {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+canvas { width: 100% !important; }
+
+/* LOG TABLE */
+.log-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+.log-table th {
+  text-align: left;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 0.6rem 1rem;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.log-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.log-table tr:hover td { background: var(--surface2); }
+
+/* ADD LOG FORM */
+.add-log-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
+@media(max-width:700px){.add-log-form{grid-template-columns:1fr 1fr;}}
+
+.form-group label {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 0.3rem;
+}
+.form-group input, .form-group select {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.form-group select option { background: var(--surface2); }
+
+.submit-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.submit-btn:hover { background: #d04f28; }
+
+/* NOTION PANEL */
+.notion-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.notion-panel h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notion-panel p { font-size: 0.8rem; color: var(--text2); line-height: 1.7; margin-bottom: 1rem; }
+
+.notion-step {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  font-size: 0.8rem;
+}
+.notion-step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--border2);
+  flex-shrink: 0;
+  width: 1.5rem;
+  line-height: 1.4;
+}
+
+.step-body { color: var(--text2); line-height: 1.7; }
+.step-body strong { color: var(--text); }
+.step-body code {
+  background: var(--surface3);
+  color: var(--accent2);
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 2px;
+}
+
+.notion-input-row { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; }
+.notion-input-row input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  outline: none;
+}
+.notion-input-row input:focus { border-color: var(--accent); }
+.notion-input-row input::placeholder { color: var(--text3); }
+
+/* STATUS BADGE */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1px;
+}
+.badge.connected { background: rgba(76,175,130,0.15); color: var(--green); border: 1px solid var(--green2); }
+.badge.disconnected { background: rgba(232,97,58,0.1); color: var(--accent); border: 1px solid rgba(232,97,58,0.3); }
+
+/* CALLOUT */
+.callout {
+  border-left: 3px solid var(--gold);
+  background: rgba(212,168,67,0.06);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  font-size: 0.82rem;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.callout strong { color: var(--gold); }
+
+.callout.accent {
+  border-left-color: var(--accent);
+  background: rgba(232,97,58,0.06);
+}
+.callout.accent strong { color: var(--accent); }
+
+.callout.green {
+  border-left-color: var(--green);
+  background: rgba(76,175,130,0.06);
+}
+.callout.green strong { color: var(--green); }
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .debt-row { grid-template-columns: 1fr 1fr; }
+  .debt-row > *:nth-child(n+5) { display: none; }
+  .debt-row.header-row > *:nth-child(n+5) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="logo">RECOVERY//DASH</span>
+    <span class="header-date" id="headerDate"></span>
+  </div>
+  <div class="header-right">
+    <span class="badge disconnected" id="notionBadge">● Notion Not Connected</span>
+    <button class="sync-btn" onclick="syncNotion()" id="syncBtn">↻ Sync Notion</button>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="show('overview',this)">Overview</button>
+  <button onclick="show('debts',this)">Debts</button>
+  <button onclick="show('budget',this)">Budget</button>
+  <button onclick="show('payoff',this)">Payoff Plan</button>
+  <button onclick="show('log',this)">Monthly Log</button>
+  <button onclick="show('notion',this)">⚙ Notion Setup</button>
+</nav>
+
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview" class="active">
+  <div class="stat-grid" id="overviewStats"></div>
+
+  <div class="sec-header">
+    <span class="sec-title">Debt Snapshot</span>
+    <span class="sec-sub">Sorted by payoff priority</span>
+  </div>
+
+  <div class="debt-list">
+    <div class="debt-row header-row">
+      <span>Account</span>
+      <span>Balance</span>
+      <span>Rate</span>
+      <span>Min. Payment</span>
+      <span>Paid Off</span>
+      <span></span>
+    </div>
+    <div id="overviewDebtRows"></div>
+  </div>
+
+  <div class="callout accent">
+    <strong>Your action this week:</strong> Stop all non-essential spending. Move $1,000 into a separate savings account as your emergency buffer. Call Discover and Citi and ask for an APR reduction — Citi is at 25.49% which is aggressive, and one 10-minute call can sometimes drop it 3–5 points.
+  </div>
+
+  <div class="callout green">
+    <strong>Student loans — don't panic.</strong> Your federal loans are at 3.76%–5.05%, which is lower than inflation historically. Minimum payments only while you destroy the high-interest debt. Do NOT make extra payments on these until the credit cards and SoFi loan are gone.
+  </div>
+</section>
+
+<!-- DEBTS -->
+<section id="debts">
+  <div class="sec-header">
+    <span class="sec-title">All Debts — Live Balances</span>
+    <span class="sec-sub">Click balance to edit</span>
+  </div>
+
+  <div class="debt-list" id="debtDetailList"></div>
+
+  <div class="sec-header" style="margin-top:2rem;">
+    <span class="sec-title">Avalanche Order</span>
+    <span class="sec-sub">Highest interest rate first</span>
+  </div>
+
+  <div class="strategy-card">
+    <h3><span style="color:var(--accent)">①</span> Citi Card & Apple Card — 25.49% APR</h3>
+    <p>These are your most expensive debts per dollar. Every dollar here costs you 25 cents a year just to hold it. Pay every available extra dollar here first. Citi ($3,884.99) is smaller — you could eliminate it in ~5–6 months with focused payments. Cross it off the list, then all that firepower moves to Apple Card.</p>
+  </div>
+
+  <div class="strategy-card gold">
+    <h3><span style="color:var(--gold)">②</span> Discover Card — 18.74% APR ($25,638.50)</h3>
+    <p>This is the big one. Once Citi and Apple are gone, your full extra payment power shifts here. This is the debt that will take the longest to eliminate, but once it's gone your monthly cash flow opens up dramatically. Every month you pay this down, the interest charge shrinks and more of your payment hits the principal.</p>
+  </div>
+
+  <div class="strategy-card" style="border-left-color:var(--purple)">
+    <h3><span style="color:var(--purple)">③</span> SoFi Personal Loan — 18.18% APR ($18,744.87)</h3>
+    <p>Similar rate to Discover but a fixed installment loan — your $762.65 payment is already structured. Continue the fixed payment, and once Discover is eliminated, throw the freed-up funds here to accelerate payoff.</p>
+  </div>
+
+  <div class="strategy-card blue">
+    <h3><span style="color:var(--blue)">④</span> Student Loans — 3.76%–5.05% APR</h3>
+    <p>Minimum payments only until everything above is eliminated. These are federal loans which also have income-based repayment and forgiveness options as a backstop. Don't pay a dollar more than required until your high-interest debt is zero.</p>
+  </div>
+</section>
+
+<!-- BUDGET -->
+<section id="budget">
+  <div class="sec-header">
+    <span class="sec-title">Monthly Budget Builder</span>
+    <span class="sec-sub">Based on your actual $3,355/mo take-home</span>
+  </div>
+
+  <div class="alloc-bar-wrap">
+    <div class="alloc-bar-label">Income Allocation</div>
+    <div class="alloc-bar" id="allocBar">
+      <div class="alloc-seg" style="background:#b8860b;" id="seg-needs">Needs</div>
+      <div class="alloc-seg" style="background:#c84b2f;" id="seg-debt">Debt</div>
+      <div class="alloc-seg" style="background:#1e6091;" id="seg-save">Save</div>
+      <div class="alloc-seg" style="background:#3a6b50;" id="seg-wants">Wants</div>
+    </div>
+    <div class="alloc-legend">
+      <span class="al-item"><span class="al-dot" style="background:#b8860b;"></span>Needs <span id="leg-needs" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#c84b2f;"></span>Debt <span id="leg-debt" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#1e6091;"></span>Savings <span id="leg-save" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#3a6b50;"></span>Wants <span id="leg-wants" style="margin-left:.3rem;"></span></span>
+      <span class="al-item" id="leg-surplus"></span>
+    </div>
+  </div>
+
+  <div class="budget-grid">
+    <div class="budget-section">
+      <div class="budget-section-header">
+        <span>🏠 Essential Needs</span>
+        <span id="needs-total" style="color:var(--gold);"></span>
+      </div>
+      <div id="needs-lines"></div>
+      <div class="budget-total">
+        <span>Subtotal</span><span id="needs-sub"></span>
+      </div>
+    </div>
+
+    <div class="budget-section">
+      <div class="budget-section-header">
+        <span>💳 Debt Payments</span>
+        <span id="debt-total" style="color:var(--accent);"></span>
+      </div>
+      <div id="debt-lines"></div>
+      <div class="budget-total">
+        <span>Subtotal</span><span id="debt-sub" style="color:var(--accent);"></span>
+      </div>
+    </div>
+
+    <div class="budget-section">
+      <div class="budget-section-header">
+        <span>🏦 Savings</span>
+        <span id="save-total" style="color:var(--blue);"></span>
+      </div>
+      <div id="save-lines"></div>
+      <div class="budget-total">
+        <span>Subtotal</span><span id="save-sub" style="color:var(--blue);"></span>
+      </div>
+    </div>
+
+    <div class="budget-section">
+      <div class="budget-section-header">
+        <span>🎯 Personal / Wants</span>
+        <span id="wants-total" style="color:var(--green);"></span>
+      </div>
+      <div id="wants-lines"></div>
+      <div class="budget-total">
+        <span>Subtotal</span><span id="wants-sub" style="color:var(--green);"></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Monthly Take-Home</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);">$3,355.60</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Remaining / Shortfall</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;" id="budget-remaining">—</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Debt payments are $1,768.78/month</strong> — 53% of your take-home before rent, food, or utilities. This is temporary. When Citi Card is eliminated, that $185/month rolls straight into Apple Card and accelerates everything. Getting these paid off is the single biggest raise you'll ever give yourself.
+  </div>
+</section>
+
+<!-- PAYOFF PLAN -->
+<section id="payoff">
+  <div class="sec-header">
+    <span class="sec-title">Payoff Projections</span>
+    <span class="sec-sub">Avalanche method — high interest first</span>
+  </div>
+
+  <div class="timeline-wrap">
+    <div class="tl-grid" id="payoffStats"></div>
+  </div>
+
+  <div class="sec-header">
+    <span class="sec-title">Adjust Extra Payment</span>
+    <span class="sec-sub">Extra $ beyond minimums per month</span>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);padding:1.5rem;margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+      <div>
+        <label style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Extra Monthly Payment</label>
+        <input type="range" id="extraPayRange" min="0" max="1000" step="25" value="55" style="width:220px;accent-color:var(--accent);" oninput="updatePayoff()">
+      </div>
+      <div>
+        <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Extra Amount</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent);" id="extraPayDisplay">$55</div>
+      </div>
+      <div>
+        <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Total to Debt/Mo</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);" id="totalPayDisplay">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-area">
+    <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Remaining Debt Balance Over Time (High-Interest Only)</div>
+    <canvas id="payoffChart" height="200"></canvas>
+  </div>
+
+  <div class="callout green">
+    <strong>The side income multiplier:</strong> Every $300/month from a side hustle = roughly 8 months shaved off your payoff timeline. Every $500/month = over a year faster. The math is unambiguous — extra income at this stage has a higher ROI than almost any financial decision you'll ever make.
+  </div>
+</section>
+
+<!-- LOG -->
+<section id="log">
+  <div class="sec-header">
+    <span class="sec-title">Monthly Check-In Log</span>
+    <span class="sec-sub">Record your progress once a month</span>
+  </div>
+
+  <div class="add-log-form">
+    <div class="form-group">
+      <label>Month</label>
+      <input type="month" id="log-month">
+    </div>
+    <div class="form-group">
+      <label>Total High-Interest Debt</label>
+      <input type="number" id="log-hiDebt" placeholder="52000">
+    </div>
+    <div class="form-group">
+      <label>Extra Payment Made</label>
+      <input type="number" id="log-extra" placeholder="0">
+    </div>
+    <div class="form-group">
+      <label>Side Income Earned</label>
+      <input type="number" id="log-side" placeholder="0">
+    </div>
+    <button class="submit-btn" onclick="addLog()">+ Log Month</button>
+  </div>
+
+  <table class="log-table">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Hi-Interest Debt</th>
+        <th>Change</th>
+        <th>Extra Payment</th>
+        <th>Side Income</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="logBody"></tbody>
+  </table>
+
+  <div class="callout">
+    <strong>The monthly ritual:</strong> On the 1st of each month, spend 5 minutes here. Update your balances, log what extra you paid, record any side income. Watching this table grow is one of the most motivating things you can do — you'll see the numbers move.
+  </div>
+</section>
+
+<!-- NOTION SETUP -->
+<section id="notion">
+  <div class="sec-header">
+    <span class="sec-title">Notion Integration</span>
+    <span class="sec-sub">Connect your data for cross-device sync</span>
+  </div>
+
+  <div class="notion-panel">
+    <h3>📋 How the Sync Works</h3>
+    <p>The sync pulls your current debt balances from Notion into the dashboard. Your Notion token lives securely in Netlify as an environment variable — never in this page. The only thing you save here is your Debts database ID.</p>
+    <div class="notion-step">
+      <span class="step-num">1</span>
+      <div class="step-body">In your Netlify site, go to <strong>Site configuration → Environment variables</strong> and add: key <code>NOTION_TOKEN</code>, value = your Notion integration token. Then go to <strong>Deploys → Trigger deploy → Deploy site</strong>.</div>
+    </div>
+    <div class="notion-step">
+      <span class="step-num">2</span>
+      <div class="step-body">Make sure your Debts database is shared with your integration: open the database in Notion, click <strong>···</strong> → <strong>Add connections</strong> → Finance Dashboard.</div>
+    </div>
+    <div class="notion-step">
+      <span class="step-num">3</span>
+      <div class="step-body">Paste your Debts database ID below and hit Save. The ID is the 32-character string in the database URL after <code>notion.so/</code>. Then click <strong>↻ Sync Notion</strong> in the top bar.</div>
+    </div>
+  </div>
+
+  <div class="notion-panel">
+    <h3>🔑 Database IDs</h3>
+    <p>Your Notion token is stored in Netlify, not here. Just save your database IDs below.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Debts Database ID</label>
+        <input type="text" id="debtsDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Monthly Log Database ID</label>
+        <input type="text" id="logDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Budget Database ID</label>
+        <input type="text" id="budgetDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+      </div>
+    </div>
+    <button class="submit-btn" onclick="saveNotionConfig()">Save Database IDs</button>
+  </div>
+
+  <div class="callout">
+    <strong>Works without Notion too.</strong> All your data saves to this browser automatically between sessions. Notion sync just keeps balances current across devices.
+  </div>
+</section>
+
+</main>
+
+<script>
+// =====================================================================
+// DATA — YOUR REAL NUMBERS
+// =====================================================================
+const INCOME = 3355.60;
+
+const DEBTS_DEFAULT = [
+  { id:'citi',     name:'Citi Card',       type:'Credit Card',    balance:3884.99,  original:3884.99, rate:25.49, minPayment:130.37, priority:1 },
+  { id:'apple',    name:'Apple Card',      type:'Credit Card',    balance:4459.52,  original:4459.52, rate:25.49, minPayment:130.00, priority:2 },
+  { id:'discover', name:'Discover Card',   type:'Credit Card',    balance:25638.50, original:25638.50,rate:18.74, minPayment:524.00, priority:3 },
+  { id:'sofi',     name:'SoFi Loan',       type:'Personal Loan',  balance:18744.87, original:18744.87,rate:18.18, minPayment:762.65, priority:4 },
+  { id:'sl1',      name:'Student Loan 1-01',type:'Student Loan',  balance:5475.96,  original:5475.96, rate:3.76,  minPayment:55.59,  priority:5 },
+  { id:'sl2',      name:'Student Loan 1-02',type:'Student Loan',  balance:6425.07,  original:6425.07, rate:4.45,  minPayment:65.28,  priority:6 },
+  { id:'sl3',      name:'Student Loan 1-03',type:'Student Loan',  balance:7246.58,  original:7246.58, rate:5.05,  minPayment:45.89,  priority:7 },
+];
+
+const BUDGET_DEFAULT = {
+  needs: [
+    { name:'Rent',                    amount:943.00 },
+    { name:'Groceries',               amount:200.00 },
+    { name:'Gas / Transportation',    amount:80.00  },
+    { name:'Utilities (Gas / Water)', amount:145.00 },
+    { name:'Electric',                amount:60.00  },
+    { name:'Internet',                amount:30.60  },
+    { name:'Health (Prescriptions)',  amount:20.00  },
+    { name:'Personal Care & Hygiene', amount:30.00  },
+  ],
+  debt: [
+    { name:'SoFi Personal Loan',          amount:762.65 },
+    { name:'Discover Card (min)',          amount:524.00 },
+    { name:'Citi Card (min)',              amount:130.37 },
+    { name:'Apple Card (min)',             amount:130.00 },
+    { name:'Student Loans',               amount:166.76 },
+    { name:'Extra Debt Payment → Citi',   amount:55.00  },
+  ],
+  save: [
+    { name:'Emergency Fund', amount:100.00 },
+  ],
+  wants: [
+    { name:'Restaurants & Entertainment', amount:30.00 },
+    { name:'Personal / Misc',             amount:20.00 },
+  ],
+};
+
+// =====================================================================
+// STATE
+// =====================================================================
+let debts  = JSON.parse(localStorage.getItem('fd_debts')  || 'null') || JSON.parse(JSON.stringify(DEBTS_DEFAULT));
+let budget = JSON.parse(localStorage.getItem('fd_budget') || 'null') || JSON.parse(JSON.stringify(BUDGET_DEFAULT));
+let logs   = JSON.parse(localStorage.getItem('fd_logs')   || '[]');
+let notionConfig = JSON.parse(localStorage.getItem('fd_notion') || '{}');
+
+function saveState() {
+  localStorage.setItem('fd_debts', JSON.stringify(debts));
+  localStorage.setItem('fd_budget', JSON.stringify(budget));
+  localStorage.setItem('fd_logs', JSON.stringify(logs));
+}
+
+// =====================================================================
+// NAV
+// =====================================================================
+function show(id, btn) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='overview') renderOverview();
+  if(id==='debts') renderDebtDetail();
+  if(id==='budget') renderBudget();
+  if(id==='payoff') { renderPayoff(); updatePayoff(); }
+  if(id==='log') renderLog();
+}
+
+// =====================================================================
+// FORMAT
+// =====================================================================
+const fmt = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const fmtK = n => n >= 1000 ? '$' + (n/1000).toFixed(1) + 'K' : fmt(n);
+
+// =====================================================================
+// OVERVIEW
+// =====================================================================
+function renderOverview() {
+  const hiInterest = debts.filter(d=>d.type!=='Student Loan');
+  const hiTotal = hiInterest.reduce((s,d)=>s+d.balance,0);
+  const allTotal = debts.reduce((s,d)=>s+d.balance,0);
+  const minPayments = debts.reduce((s,d)=>s+d.minPayment,0);
+  const hiMonthlyInterest = hiInterest.reduce((s,d)=>s+(d.balance*d.rate/100/12),0);
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card danger">
+      <div class="stat-label">High-Interest Debt</div>
+      <div class="stat-value">${fmtK(hiTotal)}</div>
+      <div class="stat-sub">Citi + Apple + Discover + SoFi</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">Total All Debt</div>
+      <div class="stat-value">${fmtK(allTotal)}</div>
+      <div class="stat-sub">Including student loans</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-label">Monthly Interest (Hi-Rate)</div>
+      <div class="stat-value">${fmtK(hiMonthlyInterest)}</div>
+      <div class="stat-sub">Money burned every month</div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-label">Min Payments / Month</div>
+      <div class="stat-value">${fmtK(minPayments)}</div>
+      <div class="stat-sub">${Math.round(minPayments/INCOME*100)}% of take-home</div>
+    </div>
+  `;
+
+  const sorted = [...debts].sort((a,b)=>a.priority-b.priority);
+  document.getElementById('overviewDebtRows').innerHTML = sorted.map(d=>{
+    const paidPct = Math.max(0, Math.min(100, (1-(d.balance/d.original))*100));
+    const dotClass = d.priority<=2?'p1':d.priority<=4?'p2':d.type==='Student Loan'?'p4':'p3';
+    const rateClass = d.rate>=20?'high-rate':d.rate>=10?'med-rate':'low-rate';
+    return `
+    <div class="debt-row">
+      <div class="debt-name"><span class="priority-dot ${dotClass}"></span>${d.name}</div>
+      <div class="debt-balance">${fmt(d.balance)}</div>
+      <div><span class="debt-rate ${rateClass}">${d.rate}%</span></div>
+      <div class="debt-payment">${fmt(d.minPayment)}/mo</div>
+      <div>
+        <div class="progress-track"><div class="progress-fill" style="width:${paidPct}%;background:${paidPct>50?'var(--green)':'var(--accent)'}"></div></div>
+        <div style="font-size:0.6rem;color:var(--text3);margin-top:0.2rem;">${paidPct.toFixed(0)}% paid</div>
+      </div>
+      <div></div>
+    </div>`;
+  }).join('');
+}
+
+// =====================================================================
+// DEBT DETAIL
+// =====================================================================
+function renderDebtDetail() {
+  const sorted = [...debts].sort((a,b)=>a.priority-b.priority);
+  document.getElementById('debtDetailList').innerHTML = `
+    <div class="debt-row header-row">
+      <span>Account</span><span>Current Balance</span><span>Rate</span><span>Min. Payment</span><span>Progress</span><span>Update</span>
+    </div>
+  ` + sorted.map(d=>{
+    const paidPct = Math.max(0,Math.min(100,(1-(d.balance/d.original))*100));
+    const dotClass = d.priority<=2?'p1':d.priority<=4?'p2':d.type==='Student Loan'?'p4':'p3';
+    const rateClass = d.rate>=20?'high-rate':d.rate>=10?'med-rate':'low-rate';
+    return `
+    <div class="debt-row">
+      <div class="debt-name"><span class="priority-dot ${dotClass}"></span>${d.name}<br><span style="font-family:'DM Mono';font-size:0.65rem;font-weight:400;color:var(--text3);">${d.type}</span></div>
+      <div>
+        <div id="bal-display-${d.id}" class="debt-balance" style="cursor:pointer;" onclick="editBalance('${d.id}')">${fmt(d.balance)}</div>
+        <input id="bal-input-${d.id}" class="balance-input" style="display:none;" type="number" value="${d.balance}" onblur="saveBalance('${d.id}')" onkeydown="if(event.key==='Enter')saveBalance('${d.id}')">
+      </div>
+      <div><span class="debt-rate ${rateClass}">${d.rate}%</span></div>
+      <div class="debt-payment">${fmt(d.minPayment)}/mo</div>
+      <div>
+        <div class="progress-track"><div class="progress-fill" style="width:${paidPct}%;background:${paidPct>50?'var(--green)':'var(--accent)'}"></div></div>
+        <div style="font-size:0.6rem;color:var(--text3);margin-top:0.2rem;">${paidPct.toFixed(1)}% paid · ${fmt(d.original - d.balance)} down</div>
+      </div>
+      <button class="edit-balance-btn" onclick="editBalance('${d.id}')">Edit Balance</button>
+    </div>`;
+  }).join('');
+}
+
+function editBalance(id) {
+  document.getElementById('bal-display-'+id).style.display = 'none';
+  const inp = document.getElementById('bal-input-'+id);
+  inp.style.display = 'block';
+  inp.focus();
+  inp.select();
+}
+
+function saveBalance(id) {
+  const inp = document.getElementById('bal-input-'+id);
+  const val = parseFloat(inp.value);
+  if(!isNaN(val) && val >= 0) {
+    const d = debts.find(x=>x.id===id);
+    if(d) { d.balance = val; saveState(); }
+  }
+  renderDebtDetail();
+  renderOverview();
+}
+
+// =====================================================================
+// BUDGET
+// =====================================================================
+function renderBudget() {
+  const cats = ['needs','debt','save','wants'];
+  cats.forEach(cat => {
+    const container = document.getElementById(cat+'-lines');
+    container.innerHTML = budget[cat].map((item,i) => `
+      <div class="budget-line">
+        <span class="bl-name">${item.name}</span>
+        <input type="number" value="${item.amount}" onchange="updateBudgetItem('${cat}',${i},this.value)" step="5">
+      </div>
+    `).join('');
+  });
+  updateBudgetTotals();
+}
+
+function updateBudgetItem(cat, i, val) {
+  budget[cat][i].amount = parseFloat(val)||0;
+  saveState();
+  updateBudgetTotals();
+}
+
+function updateBudgetTotals() {
+  const cats = ['needs','debt','save','wants'];
+  let totals = {};
+  cats.forEach(cat => {
+    totals[cat] = budget[cat].reduce((s,x)=>s+x.amount,0);
+    document.getElementById(cat+'-sub').textContent = fmt(totals[cat]);
+  });
+  const totalSpend = Object.values(totals).reduce((s,x)=>s+x,0);
+  const remaining = INCOME - totalSpend;
+  const remEl = document.getElementById('budget-remaining');
+  remEl.textContent = fmt(Math.abs(remaining)) + (remaining >= 0 ? ' surplus' : ' over budget');
+  remEl.style.color = remaining >= 0 ? 'var(--green)' : 'var(--accent)';
+
+  // allocation bar
+  const pcts = {};
+  cats.forEach(cat => pcts[cat] = Math.max(0, totals[cat]/INCOME*100));
+  const total_pct = Object.values(pcts).reduce((s,x)=>s+x,0);
+  cats.forEach(cat => {
+    const seg = document.getElementById('seg-'+cat);
+    if(seg) { seg.style.width = pcts[cat]+'%'; seg.textContent = pcts[cat]>5?cat.charAt(0).toUpperCase()+cat.slice(1):''; }
+    const leg = document.getElementById('leg-'+cat);
+    if(leg) leg.textContent = Math.round(pcts[cat])+'%';
+  });
+  const surpLeg = document.getElementById('leg-surplus');
+  if(surpLeg) {
+    surpLeg.innerHTML = remaining >= 0
+      ? `<span class="al-dot" style="background:var(--green);"></span><span style="color:var(--green);">Surplus ${Math.round((remaining/INCOME)*100)}%</span>`
+      : `<span class="al-dot" style="background:var(--accent);"></span><span style="color:var(--accent);">Over ${fmt(Math.abs(remaining))}</span>`;
+  }
+}
+
+// =====================================================================
+// PAYOFF PROJECTIONS
+// =====================================================================
+let chartInst = null;
+
+function updatePayoff() {
+  const extra = parseInt(document.getElementById('extraPayRange')?.value||0);
+  document.getElementById('extraPayDisplay').textContent = '$'+extra;
+
+  const hiDebts = debts.filter(d=>d.type!=='Student Loan');
+  const totalMin = hiDebts.reduce((s,d)=>s+d.minPayment,0);
+  document.getElementById('totalPayDisplay').textContent = fmt(totalMin+extra);
+
+  // Simulate avalanche
+  const sim = hiDebts.map(d=>({...d})).sort((a,b)=>b.rate-a.rate);
+  let months = 0;
+  let totalInterest = 0;
+  const balHistory = [sim.reduce((s,d)=>s+d.balance,0)];
+
+  while(sim.some(d=>d.balance>0) && months < 360) {
+    months++;
+    let extraLeft = extra;
+    let monthInterest = 0;
+    sim.forEach(d=>{
+      if(d.balance<=0) return;
+      const interest = d.balance * d.rate/100/12;
+      monthInterest += interest;
+      d.balance += interest;
+      d.balance -= d.minPayment;
+      if(d.balance < 0) d.balance = 0;
+    });
+    totalInterest += monthInterest;
+    // Apply extra to highest rate with balance
+    for(const d of sim) {
+      if(d.balance > 0 && extraLeft > 0) {
+        const pay = Math.min(extraLeft, d.balance);
+        d.balance -= pay;
+        extraLeft -= pay;
+      }
+    }
+    balHistory.push(Math.max(0, sim.reduce((s,d)=>s+d.balance,0)));
+    if(balHistory[balHistory.length-1] <= 0) break;
+  }
+
+  const payoffYear = new Date();
+  payoffYear.setMonth(payoffYear.getMonth() + months);
+
+  document.getElementById('payoffStats').innerHTML = `
+    <div class="tl-item"><div class="tl-item-label">Months to Pay Off Hi-Interest</div><div class="tl-item-val" style="color:var(--accent);">${months} mo</div><div class="tl-item-sub">~${(months/12).toFixed(1)} years</div></div>
+    <div class="tl-item"><div class="tl-item-label">Estimated Debt-Free</div><div class="tl-item-val">${payoffYear.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div><div class="tl-item-sub">High-interest only</div></div>
+    <div class="tl-item"><div class="tl-item-label">Total Interest Paid</div><div class="tl-item-val" style="color:var(--gold);">${fmtK(totalInterest)}</div><div class="tl-item-sub">Cost of carrying this debt</div></div>
+    <div class="tl-item"><div class="tl-item-label">Monthly Freed at Payoff</div><div class="tl-item-val" style="color:var(--green);">${fmt(totalMin)}</div><div class="tl-item-sub">Income reclaimed</div></div>
+  `;
+
+  drawChart(balHistory);
+}
+
+function drawChart(data) {
+  const canvas = document.getElementById('payoffChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 700;
+  const H = 200;
+  canvas.width = W * (window.devicePixelRatio||1);
+  canvas.height = H * (window.devicePixelRatio||1);
+  ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+
+  const pad = { top:10, right:20, bottom:30, left:55 };
+  const cW = W-pad.left-pad.right;
+  const cH = H-pad.top-pad.bottom;
+  const max = data[0];
+  const step = Math.max(1, Math.floor(data.length/cW));
+  const pts = data.filter((_,i)=>i%step===0);
+
+  // grid
+  ctx.strokeStyle = '#2a2f3d';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++) {
+    const y = pad.top + cH*(1-i/4);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
+    ctx.fillStyle = '#5c6275';
+    ctx.font = '10px DM Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('$'+(max*(i/4)/1000).toFixed(0)+'K', pad.left-6, y+4);
+  }
+
+  // line
+  const grad = ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
+  grad.addColorStop(0,'rgba(232,97,58,0.6)');
+  grad.addColorStop(1,'rgba(232,97,58,0.0)');
+
+  ctx.beginPath();
+  pts.forEach((v,i)=>{
+    const x = pad.left + (i/(pts.length-1))*cW;
+    const y = pad.top + cH*(1-v/max);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = 'var(--accent)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // fill
+  ctx.lineTo(pad.left+cW, pad.top+cH);
+  ctx.lineTo(pad.left, pad.top+cH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // x labels
+  ctx.fillStyle = '#5c6275';
+  ctx.textAlign = 'center';
+  const now = new Date();
+  [0, 0.25, 0.5, 0.75, 1].forEach(p => {
+    const idx = Math.floor(p*(pts.length-1));
+    const x = pad.left + p*cW;
+    const d = new Date(now); d.setMonth(d.getMonth()+Math.floor(p*data.length));
+    ctx.fillText(d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}), x, H-8);
+  });
+}
+
+// =====================================================================
+// LOG
+// =====================================================================
+function addLog() {
+  const month = document.getElementById('log-month').value;
+  const hiDebt = parseFloat(document.getElementById('log-hiDebt').value)||0;
+  const extra = parseFloat(document.getElementById('log-extra').value)||0;
+  const side = parseFloat(document.getElementById('log-side').value)||0;
+  if(!month) { alert('Please select a month'); return; }
+  logs.push({ month, hiDebt, extra, side });
+  logs.sort((a,b)=>a.month.localeCompare(b.month));
+  saveState();
+  renderLog();
+}
+
+function renderLog() {
+  const tbody = document.getElementById('logBody');
+  if(!logs.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text3);text-align:center;padding:2rem;">No entries yet — log your first month above.</td></tr>'; return; }
+  tbody.innerHTML = logs.map((l,i)=>{
+    const prev = logs[i-1];
+    const change = prev ? l.hiDebt - prev.hiDebt : null;
+    const changeStr = change!==null ? `<span style="color:${change<0?'var(--green)':'var(--accent)'}">${change<0?'▼':'▲'} ${fmt(Math.abs(change))}</span>` : '—';
+    return `<tr>
+      <td>${l.month}</td>
+      <td>${fmt(l.hiDebt)}</td>
+      <td>${changeStr}</td>
+      <td style="color:var(--accent);">${l.extra>0?fmt(l.extra):'—'}</td>
+      <td style="color:var(--green);">${l.side>0?fmt(l.side):'—'}</td>
+      <td><button onclick="deleteLog(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.7rem;">✕</button></td>
+    </tr>`;
+  }).reverse().join('');
+}
+
+function deleteLog(i) {
+  if(confirm('Remove this entry?')) { logs.splice(i,1); saveState(); renderLog(); }
+}
+
+// =====================================================================
+// NOTION SYNC
+// =====================================================================
+function saveNotionConfig() {
+  notionConfig.debtsDb = document.getElementById('debtsDbId').value.trim();
+  notionConfig.logDb = document.getElementById('logDbId').value.trim();
+  notionConfig.budgetDb = document.getElementById('budgetDbId').value.trim();
+  localStorage.setItem('fd_notion', JSON.stringify(notionConfig));
+  alert('Configuration saved. Click "Sync Notion" in the top bar to pull your data.');
+}
+
+async function syncNotion() {
+  if(!notionConfig.debtsDb) { alert('Please add your Debts database ID in the Notion Setup tab first.'); return; }
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = '↻ Syncing...';
+  try {
+    const res = await fetch('/.netlify/functions/notion-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ databaseId: notionConfig.debtsDb })
+    });
+    if(!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || 'Server error ' + res.status);
+    }
+    const data = await res.json();
+    data.results.forEach(page => {
+      const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
+      const balance = page.properties['Balance']?.number;
+      if(name && balance != null) {
+        const d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
+        if(d) d.balance = balance;
+      }
+    });
+    saveState();
+    document.getElementById('notionBadge').textContent = '● Synced';
+    document.getElementById('notionBadge').className = 'badge connected';
+    btn.textContent = '✓ Synced';
+    btn.className = 'sync-btn synced';
+    setTimeout(()=>{ btn.textContent='↻ Sync Notion'; btn.className='sync-btn'; }, 3000);
+    renderOverview(); renderDebtDetail();
+  } catch(e) {
+    btn.textContent = '↻ Sync Notion';
+    alert('Sync failed: ' + e.message);
+  }
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase();
+document.getElementById('log-month').value = new Date().toISOString().slice(0,7);
+
+// Load saved notion config
+if(notionConfig.debtsDb) document.getElementById('debtsDbId').value = notionConfig.debtsDb;
+if(notionConfig.logDb) document.getElementById('logDbId').value = notionConfig.logDb;
+if(notionConfig.budgetDb) document.getElementById('budgetDbId').value = notionConfig.budgetDb;
+
+renderOverview();
+</script>
+</body>
+</html>
