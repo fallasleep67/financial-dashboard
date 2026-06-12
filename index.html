@@ -718,8 +718,8 @@ canvas { width: 100% !important; }
   </div>
 
   <div class="strategy-card" style="border-left-color:var(--purple)">
-    <h3><span style="color:var(--purple)">③</span> SoFi Personal Loan — 18.18% APR ($18,744.87)</h3>
-    <p>Similar rate to Discover but a fixed installment loan — your $762.65 payment is already structured. Continue the fixed payment, and once Discover is eliminated, throw the freed-up funds here to accelerate payoff.</p>
+    <h3><span style="color:var(--purple)">③</span> SoFi Personal Loan — 14.75% APR ($18,744.87)</h3>
+    <p>Refinanced from 18.18% to 14.75% — this dropped your payment from $762.65 to $355.51/month, freeing up $407.14. That freed cash now powers a much larger extra payment toward Citi Card ($400/mo), dramatically accelerating your avalanche timeline. Continue the $355.51 fixed payment; once Discover is eliminated, redirect remaining funds here.</p>
   </div>
 
   <div class="strategy-card blue">
@@ -810,7 +810,7 @@ canvas { width: 100% !important; }
   </div>
 
   <div class="callout">
-    <strong>Debt payments are $1,768.78/month</strong> — 53% of your take-home before rent, food, or utilities. This is temporary. When Citi Card is eliminated, that $185/month rolls straight into Apple Card and accelerates everything. Getting these paid off is the single biggest raise you'll ever give yourself.
+    <strong>SoFi refinance success!</strong> Dropping from 18.18% to 14.75% cut your SoFi payment from $762.65 to $355.51/month — freeing up $407.14. Total debt allocation is now $1,706.64/month (51% of take-home), and your extra Citi payment jumped from $55 to $400/month. At this pace Citi Card could be gone in roughly 9 months instead of 18 — then that full payment rolls into Apple Card.
   </div>
 </section>
 
@@ -834,11 +834,11 @@ canvas { width: 100% !important; }
     <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
       <div>
         <label style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Extra Monthly Payment</label>
-        <input type="range" id="extraPayRange" min="0" max="1000" step="25" value="55" style="width:220px;accent-color:var(--accent);" oninput="updatePayoff()">
+        <input type="range" id="extraPayRange" min="0" max="1000" step="25" value="400" style="width:220px;accent-color:var(--accent);" oninput="updatePayoff()">
       </div>
       <div>
         <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Extra Amount</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent);" id="extraPayDisplay">$55</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent);" id="extraPayDisplay">$400</div>
       </div>
       <div>
         <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Total to Debt/Mo</div>
@@ -964,7 +964,7 @@ const DEBTS_DEFAULT = [
   { id:'citi',     name:'Citi Card',       type:'Credit Card',    balance:3884.99,  original:3884.99, rate:25.49, minPayment:130.37, priority:1 },
   { id:'apple',    name:'Apple Card',      type:'Credit Card',    balance:4459.52,  original:4459.52, rate:25.49, minPayment:130.00, priority:2 },
   { id:'discover', name:'Discover Card',   type:'Credit Card',    balance:25638.50, original:25638.50,rate:18.74, minPayment:524.00, priority:3 },
-  { id:'sofi',     name:'SoFi Loan',       type:'Personal Loan',  balance:18744.87, original:18744.87,rate:18.18, minPayment:762.65, priority:4 },
+  { id:'sofi',     name:'SoFi Personal Loan', type:'Personal Loan',  balance:18744.87, original:18744.87,rate:14.75, minPayment:355.51, priority:4 },
   { id:'sl1',      name:'Student Loan 1-01',type:'Student Loan',  balance:5475.96,  original:5475.96, rate:3.76,  minPayment:55.59,  priority:5 },
   { id:'sl2',      name:'Student Loan 1-02',type:'Student Loan',  balance:6425.07,  original:6425.07, rate:4.45,  minPayment:65.28,  priority:6 },
   { id:'sl3',      name:'Student Loan 1-03',type:'Student Loan',  balance:7246.58,  original:7246.58, rate:5.05,  minPayment:45.89,  priority:7 },
@@ -982,15 +982,15 @@ const BUDGET_DEFAULT = {
     { name:'Personal Care & Hygiene', amount:30.00  },
   ],
   debt: [
-    { name:'SoFi Personal Loan',          amount:762.65 },
+    { name:'SoFi Personal Loan',          amount:355.51 },
     { name:'Discover Card (min)',          amount:524.00 },
     { name:'Citi Card (min)',              amount:130.37 },
     { name:'Apple Card (min)',             amount:130.00 },
     { name:'Student Loans',               amount:166.76 },
-    { name:'Extra Debt Payment → Citi',   amount:55.00  },
+    { name:'Extra Debt Payment (Citi)',   amount:400.00 },
   ],
   save: [
-    { name:'Emergency Fund', amount:100.00 },
+    { name:'Emergency Fund', amount:90.36 },
   ],
   wants: [
     { name:'Restaurants & Entertainment', amount:30.00 },
@@ -1377,9 +1377,20 @@ async function syncNotion() {
     data.results.forEach(page => {
       const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
       const balance = page.properties['Balance']?.number;
-      if(name && balance != null) {
-        const d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
-        if(d) d.balance = balance;
+      const rateRaw = page.properties['Interest Rate']?.number;
+      const minPay  = page.properties['Minimum Payment']?.number;
+      if(!name) return;
+      // Match on exact name, or on first word (handles "SoFi Loan" -> "SoFi Personal Loan" renames)
+      let d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
+      if(!d) {
+        const firstWord = name.toLowerCase().split(' ')[0];
+        d = debts.find(x => x.name.toLowerCase().split(' ')[0] === firstWord);
+      }
+      if(d) {
+        if(balance != null) d.balance = balance;
+        if(rateRaw != null) d.rate = rateRaw <= 1 ? rateRaw * 100 : rateRaw; // handle percent stored as 0.1475 or 14.75
+        if(minPay != null) d.minPayment = minPay;
+        if(name) d.name = name; // keep dashboard name in sync with Notion (e.g. refinance renames)
       }
     });
     saveState();
