@@ -1169,7 +1169,20 @@ const RECURRING_DEFAULT = [
 // STATE
 // =====================================================================
 let debts  = JSON.parse(localStorage.getItem('fd_debts')  || 'null') || JSON.parse(JSON.stringify(DEBTS_DEFAULT));
-let budget = JSON.parse(localStorage.getItem('fd_budget') || 'null') || JSON.parse(JSON.stringify(BUDGET_DEFAULT));
+let budget = (function() {
+  const saved = JSON.parse(localStorage.getItem('fd_budget') || 'null');
+  if(!saved) return JSON.parse(JSON.stringify(BUDGET_DEFAULT));
+  // Merge: for each category, keep saved amounts for items that still exist,
+  // but add any new default items that aren't in the saved data yet.
+  const merged = {};
+  for(const cat of Object.keys(BUDGET_DEFAULT)) {
+    const savedItems = saved[cat] || [];
+    const savedNames = new Set(savedItems.map(i => i.name));
+    const newItems = BUDGET_DEFAULT[cat].filter(d => !savedNames.has(d.name));
+    merged[cat] = [...savedItems, ...newItems.map(i => ({...i}))];
+  }
+  return merged;
+})();
 let logs   = JSON.parse(localStorage.getItem('fd_logs')   || '[]');
 let recurringPayments = JSON.parse(localStorage.getItem('fd_recurring') || 'null') || JSON.parse(JSON.stringify(RECURRING_DEFAULT));
 let notionConfig = JSON.parse(localStorage.getItem('fd_notion') || '{}');
