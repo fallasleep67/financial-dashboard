@@ -339,6 +339,11 @@ section.active { display: block; }
   margin-bottom: 2rem;
   align-items: start;
 }
+.budget-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 @media(max-width:600px){.budget-grid{grid-template-columns:1fr;}}
 
 .budget-section {
@@ -870,47 +875,51 @@ canvas { width: 100% !important; }
   </div>
 
   <div class="budget-grid">
-    <div class="budget-section">
-      <div class="budget-section-header">
-        <span>🏠 Essential Needs</span>
-        <span id="needs-total" style="color:var(--gold);"></span>
+    <div class="budget-col">
+      <div class="budget-section">
+        <div class="budget-section-header">
+          <span>🏠 Essential Needs</span>
+          <span id="needs-total" style="color:var(--gold);"></span>
+        </div>
+        <div id="needs-lines"></div>
+        <div class="budget-total">
+          <span>Subtotal</span><span id="needs-sub"></span>
+        </div>
       </div>
-      <div id="needs-lines"></div>
-      <div class="budget-total">
-        <span>Subtotal</span><span id="needs-sub"></span>
+
+      <div class="budget-section">
+        <div class="budget-section-header">
+          <span>🏦 Savings</span>
+          <span id="save-total" style="color:var(--blue);"></span>
+        </div>
+        <div id="save-lines"></div>
+        <div class="budget-total">
+          <span>Subtotal</span><span id="save-sub" style="color:var(--blue);"></span>
+        </div>
       </div>
     </div>
 
-    <div class="budget-section">
-      <div class="budget-section-header">
-        <span>💳 Debt Payments</span>
-        <span id="debt-total" style="color:var(--accent);"></span>
+    <div class="budget-col">
+      <div class="budget-section">
+        <div class="budget-section-header">
+          <span>💳 Debt Payments</span>
+          <span id="debt-total" style="color:var(--accent);"></span>
+        </div>
+        <div id="debt-lines"></div>
+        <div class="budget-total">
+          <span>Subtotal</span><span id="debt-sub" style="color:var(--accent);"></span>
+        </div>
       </div>
-      <div id="debt-lines"></div>
-      <div class="budget-total">
-        <span>Subtotal</span><span id="debt-sub" style="color:var(--accent);"></span>
-      </div>
-    </div>
 
-    <div class="budget-section">
-      <div class="budget-section-header">
-        <span>🏦 Savings</span>
-        <span id="save-total" style="color:var(--blue);"></span>
-      </div>
-      <div id="save-lines"></div>
-      <div class="budget-total">
-        <span>Subtotal</span><span id="save-sub" style="color:var(--blue);"></span>
-      </div>
-    </div>
-
-    <div class="budget-section">
-      <div class="budget-section-header">
-        <span>🎯 Personal / Wants</span>
-        <span id="wants-total" style="color:var(--green);"></span>
-      </div>
-      <div id="wants-lines"></div>
-      <div class="budget-total">
-        <span>Subtotal</span><span id="wants-sub" style="color:var(--green);"></span>
+      <div class="budget-section">
+        <div class="budget-section-header">
+          <span>🎯 Personal / Wants</span>
+          <span id="wants-total" style="color:var(--green);"></span>
+        </div>
+        <div id="wants-lines"></div>
+        <div class="budget-total">
+          <span>Subtotal</span><span id="wants-sub" style="color:var(--green);"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -1172,13 +1181,18 @@ let debts  = JSON.parse(localStorage.getItem('fd_debts')  || 'null') || JSON.par
 let budget = (function() {
   const saved = JSON.parse(localStorage.getItem('fd_budget') || 'null');
   if(!saved) return JSON.parse(JSON.stringify(BUDGET_DEFAULT));
-  // Merge: for each category, keep saved amounts for items that still exist,
-  // but add any new default items that aren't in the saved data yet.
+  // Merge: for each category, keep saved items, and only add default items
+  // that don't fuzzy-match any existing saved item (handles renames like
+  // "Gas / Transportation" -> "Gas" or "Extra Debt Payment (Citi)" -> "Extra Debt Payment -> Citi")
+  const norm = s => s.toLowerCase().replace(/\(.*?\)/g,'').replace(/[\u2192].*$/g,'').replace(/[^a-z0-9 ]/g,'').trim();
   const merged = {};
   for(const cat of Object.keys(BUDGET_DEFAULT)) {
     const savedItems = saved[cat] || [];
-    const savedNames = new Set(savedItems.map(i => i.name));
-    const newItems = BUDGET_DEFAULT[cat].filter(d => !savedNames.has(d.name));
+    const savedNorms = savedItems.map(i => norm(i.name));
+    const newItems = BUDGET_DEFAULT[cat].filter(d => {
+      const dn = norm(d.name);
+      return !savedNorms.some(sn => sn === dn || sn.split(' ')[0] === dn.split(' ')[0]);
+    });
     merged[cat] = [...savedItems, ...newItems.map(i => ({...i}))];
   }
   return merged;
