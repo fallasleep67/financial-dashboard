@@ -4,27 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Financial Recovery Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0d0f14;
-  --surface: #13161e;
-  --surface2: #1a1e28;
-  --surface3: #222736;
-  --border: #2a2f3d;
-  --border2: #353b50;
-  --text: #e8eaf0;
-  --text2: #9198aa;
-  --text3: #5c6275;
-  --accent: #e8613a;
-  --accent2: #f0a070;
-  --gold: #d4a843;
-  --green: #4caf82;
-  --green2: #2d7a5a;
-  --blue: #4a8fd4;
-  --red: #d44a4a;
-  --purple: #8b6dd4;
-  --glow: rgba(232,97,58,0.15);
+  --bg: #faf7f0;
+  --surface: #ffffff;
+  --surface2: #f3efe4;
+  --surface3: #ece6d8;
+  --border: #e8e2d3;
+  --border2: #ddd5c2;
+  --text: #2b2924;
+  --text2: #6b6457;
+  --text3: #a39b8a;
+  --accent: #d98e6f;
+  --accent2: #e8b09a;
+  --gold: #c9a25f;
+  --green: #6f8f6a;
+  --green2: #50704c;
+  --blue: #7a9bb0;
+  --red: #cf6f5a;
+  --purple: #a8855f;
+  --glow: rgba(217,142,111,0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,41 +32,33 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* SCANLINE OVERLAY */
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-  pointer-events: none;
-  z-index: 9999;
-}
-
 /* TOP HEADER */
 .header {
   padding: 1.5rem 2rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--text);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--surface);
+  background: var(--bg);
   position: sticky; top: 0; z-index: 100;
 }
 
 .header-left { display: flex; align-items: baseline; gap: 1.5rem; }
 
 .logo {
-  font-family: 'Syne', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--accent);
+  font-family: 'Lora', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
 }
+.logo { font-family: 'Lora', serif; }
 
 .header-date {
   font-size: 0.7rem;
@@ -77,15 +69,17 @@ body::after {
 .header-right { display: flex; align-items: center; gap: 1rem; }
 
 .sync-btn {
-  background: none;
+  background: var(--surface);
   border: 1px solid var(--border2);
   color: var(--text2);
   padding: 0.4rem 0.9rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.65rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  border-radius: 0;
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -93,11 +87,11 @@ body::after {
 }
 
 .sync-btn:hover { border-color: var(--accent); color: var(--accent); }
-.sync-btn.synced { border-color: var(--green); color: var(--green); }
+.sync-btn.synced { border-color: var(--green); color: var(--green); background: #eef3ec; }
 
 /* NAV */
 nav {
-  background: var(--surface);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   display: flex;
   overflow-x: auto;
@@ -106,9 +100,10 @@ nav {
 nav::-webkit-scrollbar { display: none; }
 
 nav button {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0.85rem 1.5rem;
   border: none;
@@ -120,7 +115,7 @@ nav button {
   transition: all 0.2s;
 }
 nav button:hover { color: var(--text2); }
-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+nav button.active { color: var(--green2); border-bottom-color: var(--green); }
 
 /* MAIN */
 main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
@@ -133,9 +128,7 @@ section.active { display: block; }
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
@@ -144,18 +137,16 @@ section.active { display: block; }
   padding: 1.25rem 1.5rem;
   position: relative;
   overflow: hidden;
+  border-radius: 0;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-}
-.stat-card.danger::before { background: var(--accent); }
-.stat-card.warn::before { background: var(--gold); }
-.stat-card.good::before { background: var(--green); }
-.stat-card.info::before { background: var(--blue); }
+.stat-card::before { content: none; }
+
+.stat-card.danger { background: #fbe9e1; }
+.stat-card.warn { background: #f7eed9; }
+.stat-card.good { background: var(--green); color: white; }
+.stat-card.info { background: #e6eef2; }
 
 .stat-label {
   font-size: 0.6rem;
@@ -164,21 +155,24 @@ section.active { display: block; }
   color: var(--text3);
   margin-bottom: 0.6rem;
 }
+.stat-card.good .stat-label { color: rgba(255,255,255,0.75); }
 
 .stat-value {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.6rem;
+  font-family: 'Lora', serif;
+  font-size: 1.7rem;
   font-weight: 700;
   line-height: 1;
   margin-bottom: 0.3rem;
+  color: var(--text);
 }
 
 .stat-card.danger .stat-value { color: var(--accent); }
 .stat-card.warn .stat-value { color: var(--gold); }
-.stat-card.good .stat-value { color: var(--green); }
+.stat-card.good .stat-value { color: white; }
 .stat-card.info .stat-value { color: var(--blue); }
 
 .stat-sub { font-size: 0.65rem; color: var(--text3); }
+.stat-card.good .stat-sub { color: rgba(255,255,255,0.8); }
 
 /* SECTION HEADER */
 .sec-header {
@@ -191,15 +185,21 @@ section.active { display: block; }
 }
 
 .sec-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.1rem;
+  font-family: 'Lora', serif;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
 .sec-sub { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
 
 /* DEBT CARDS */
-.debt-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2rem; }
+.debt-list {
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--border); border-radius: 0; overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
+}
 
 .debt-row {
   background: var(--surface);
@@ -219,37 +219,39 @@ section.active { display: block; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text3);
+  font-weight: 700;
 }
 
 .debt-name {
-  font-family: 'Syne', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
 
 .priority-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
+  width: 8px; height: 8px;
+  border-radius: 0;
   flex-shrink: 0;
 }
-.p1 { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.p1 { background: var(--accent); }
 .p2 { background: var(--gold); }
 .p3 { background: var(--blue); }
 .p4 { background: var(--green); }
 
-.debt-balance { font-size: 0.9rem; font-weight: 500; }
+.debt-balance { font-size: 0.9rem; font-weight: 600; font-family: 'Lora', serif; }
 .debt-rate {
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  background: var(--surface3);
+  padding: 0.2rem 0.55rem;
+  border-radius: 0;
   display: inline-block;
+  font-weight: 600;
 }
-.high-rate { color: var(--accent); }
-.med-rate { color: var(--gold); }
-.low-rate { color: var(--green); }
+.high-rate { color: #a85a3a; background: #fbe3d8; }
+.med-rate { color: #9a7b2e; background: #f7ecc8; }
+.low-rate { color: var(--green2); background: #e2eedd; }
 
 .debt-payment { font-size: 0.8rem; color: var(--text2); }
 
@@ -263,58 +265,63 @@ section.active { display: block; }
   margin-bottom: 0.3rem;
 }
 .progress-track {
-  height: 4px;
+  height: 6px;
   background: var(--surface3);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 0;
   transition: width 1s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* EDIT BALANCE */
 .edit-balance-btn {
-  background: none;
+  background: var(--surface);
   border: 1px solid var(--border2);
   color: var(--text3);
-  padding: 0.3rem 0.6rem;
-  font-family: 'DM Mono', monospace;
+  padding: 0.35rem 0.7rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.6rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   cursor: pointer;
+  border-radius: 0;
   transition: all 0.15s;
   white-space: nowrap;
 }
 .edit-balance-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 .balance-input {
-  background: var(--surface3);
+  background: var(--surface2);
   border: 1px solid var(--accent);
   color: var(--text);
   padding: 0.3rem 0.5rem;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.8rem;
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
   width: 110px;
   outline: none;
+  border-radius: 0;
 }
 
 /* AVALANCHE SECTION */
 .strategy-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  border-left: 4px solid var(--accent);
   padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 .strategy-card.gold { border-left-color: var(--gold); }
 .strategy-card.green { border-left-color: var(--green); }
 .strategy-card.blue { border-left-color: var(--blue); }
+.strategy-card.purple { border-left-color: var(--purple); }
 
 .strategy-card h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 0.85rem;
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
   font-weight: 700;
   margin-bottom: 0.4rem;
   display: flex;
@@ -330,18 +337,21 @@ section.active { display: block; }
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 2rem;
+  align-items: start;
 }
 @media(max-width:600px){.budget-grid{grid-template-columns:1fr;}}
 
 .budget-section {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 
 .budget-section-header {
   padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border);
   font-size: 0.65rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   display: flex;
@@ -363,15 +373,17 @@ section.active { display: block; }
 .budget-line .bl-name { color: var(--text2); flex: 1; }
 
 .budget-line input {
-  background: var(--surface3);
+  background: var(--surface2);
   border: 1px solid var(--border2);
   color: var(--text);
   padding: 0.25rem 0.5rem;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.8rem;
+  font-family: 'Lora', serif;
+  font-weight: 600;
+  font-size: 0.85rem;
   width: 90px;
   text-align: right;
   outline: none;
+  border-radius: 0;
   transition: border-color 0.15s;
 }
 .budget-line input:focus { border-color: var(--accent); }
@@ -380,14 +392,13 @@ section.active { display: block; }
   padding: 0.75rem 1.25rem;
   display: flex;
   justify-content: space-between;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Lora', serif;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   background: var(--surface2);
-  border-top: 1px solid var(--border2);
 }
 
-.surplus { color: var(--green); }
+.surplus { color: var(--green2); }
 .deficit { color: var(--accent); }
 
 /* ALLOCATION BAR */
@@ -402,7 +413,7 @@ section.active { display: block; }
 .alloc-bar {
   height: 32px;
   display: flex;
-  border: 1px solid var(--border);
+  border-radius: 0;
   overflow: hidden;
   background: var(--surface3);
 }
@@ -412,8 +423,9 @@ section.active { display: block; }
   align-items: center;
   justify-content: center;
   font-size: 0.6rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.92);
   overflow: hidden;
   transition: width 0.6s ease;
   white-space: nowrap;
@@ -422,14 +434,15 @@ section.active { display: block; }
   display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.6rem;
 }
 .al-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.65rem; color: var(--text3); }
-.al-dot { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+.al-dot { width: 8px; height: 8px; border-radius: 0; flex-shrink: 0; }
 
 /* PAYOFF TIMELINE */
 .timeline-wrap {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 
 .tl-grid {
@@ -442,25 +455,26 @@ section.active { display: block; }
 .tl-item {}
 .tl-item-label { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 0.3rem; }
 .tl-item-val {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.2rem;
+  font-family: 'Lora', serif;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: var(--green);
+  color: var(--green2);
 }
 .tl-item-sub { font-size: 0.65rem; color: var(--text3); margin-top: 0.15rem; }
 
 /* CHART */
 .chart-area {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 1.5rem;
   margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 
 canvas { width: 100% !important; }
 
 /* LOG TABLE */
-.log-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+.log-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; border-radius: 0; overflow: hidden; box-shadow: 0 1px 3px rgba(43,41,36,0.05); }
 .log-table th {
   text-align: left;
   font-size: 0.6rem;
@@ -469,7 +483,7 @@ canvas { width: 100% !important; }
   color: var(--text3);
   padding: 0.6rem 1rem;
   background: var(--surface2);
-  border-bottom: 1px solid var(--border);
+  font-weight: 700;
 }
 .log-table td {
   padding: 0.75rem 1rem;
@@ -477,18 +491,20 @@ canvas { width: 100% !important; }
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
+.log-table tr:last-child td { border-bottom: none; }
 .log-table tr:hover td { background: var(--surface2); }
 
 /* ADD LOG FORM */
 .add-log-form {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 1.25rem 1.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr auto;
   gap: 1rem;
   align-items: end;
   margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 @media(max-width:700px){.add-log-form{grid-template-columns:1fr 1fr;}}
 
@@ -501,45 +517,49 @@ canvas { width: 100% !important; }
   margin-bottom: 0.3rem;
 }
 .form-group input, .form-group select {
-  background: var(--surface3);
+  background: var(--surface2);
   border: 1px solid var(--border2);
   color: var(--text);
   padding: 0.5rem 0.75rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.8rem;
   width: 100%;
   outline: none;
+  border-radius: 0;
   transition: border-color 0.15s;
 }
 .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
-.form-group select option { background: var(--surface2); }
+.form-group select option { background: var(--surface); }
 
 .submit-btn {
-  background: var(--accent);
+  background: var(--green);
   color: white;
   border: none;
   padding: 0.5rem 1.25rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.65rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  border-radius: 0;
   transition: background 0.2s;
   white-space: nowrap;
 }
-.submit-btn:hover { background: #d04f28; }
+.submit-btn:hover { background: var(--green2); }
 
 /* NOTION PANEL */
 .notion-panel {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
 }
 
 .notion-panel h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 0.95rem;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
   font-weight: 700;
   margin-bottom: 0.4rem;
   display: flex;
@@ -560,9 +580,9 @@ canvas { width: 100% !important; }
 .notion-step:last-child { border-bottom: none; }
 
 .step-num {
-  font-family: 'Syne', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
+  font-family: 'Lora', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--border2);
   flex-shrink: 0;
   width: 1.5rem;
@@ -572,23 +592,24 @@ canvas { width: 100% !important; }
 .step-body { color: var(--text2); line-height: 1.7; }
 .step-body strong { color: var(--text); }
 .step-body code {
-  background: var(--surface3);
-  color: var(--accent2);
+  background: var(--surface2);
+  color: var(--purple);
   padding: 0.1rem 0.4rem;
   font-size: 0.75rem;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .notion-input-row { display: flex; gap: 0.75rem; align-items: center; margin-top: 1rem; }
 .notion-input-row input {
   flex: 1;
-  background: var(--surface3);
+  background: var(--surface2);
   border: 1px solid var(--border2);
   color: var(--text);
   padding: 0.5rem 0.75rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.75rem;
   outline: none;
+  border-radius: 0;
 }
 .notion-input-row input:focus { border-color: var(--accent); }
 .notion-input-row input::placeholder { color: var(--text3); }
@@ -599,18 +620,20 @@ canvas { width: 100% !important; }
   align-items: center;
   gap: 0.3rem;
   font-size: 0.6rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0.2rem 0.6rem;
-  border-radius: 1px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0;
 }
-.badge.connected { background: rgba(76,175,130,0.15); color: var(--green); border: 1px solid var(--green2); }
-.badge.disconnected { background: rgba(232,97,58,0.1); color: var(--accent); border: 1px solid rgba(232,97,58,0.3); }
+.badge.connected { background: #e2eedd; color: var(--green2); }
+.badge.disconnected { background: #fbe3d8; color: #a85a3a; }
 
 /* CALLOUT */
 .callout {
-  border-left: 3px solid var(--gold);
-  background: rgba(212,168,67,0.06);
+  border-left: 4px solid var(--gold);
+  background: #faf2e0;
+  border-radius: 0;
   padding: 1rem 1.25rem;
   margin: 1.5rem 0;
   font-size: 0.82rem;
@@ -621,15 +644,106 @@ canvas { width: 100% !important; }
 
 .callout.accent {
   border-left-color: var(--accent);
-  background: rgba(232,97,58,0.06);
+  background: #fcebe2;
 }
-.callout.accent strong { color: var(--accent); }
+.callout.accent strong { color: #a85a3a; }
 
 .callout.green {
   border-left-color: var(--green);
-  background: rgba(76,175,130,0.06);
+  background: #e9f1e6;
 }
-.callout.green strong { color: var(--green); }
+.callout.green strong { color: var(--green2); }
+
+/* UPCOMING PAYMENTS PANEL */
+.upcoming-wrap { margin-bottom: 1.75rem; }
+.upcoming-list { display: flex; flex-direction: column; border-radius: 0; overflow: hidden; box-shadow: 0 1px 3px rgba(43,41,36,0.05); }
+.upcoming-row {
+  background: var(--surface);
+  padding: 0.85rem 1.25rem;
+  display: grid;
+  grid-template-columns: auto 2fr 1fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.upcoming-row:last-child { border-bottom: none; }
+.upcoming-row .up-badge {
+  font-family: 'Lora', serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: white;
+  background: var(--green);
+  border-radius: 0;
+  padding: 0.3rem 0.6rem;
+  text-align: center;
+  min-width: 3.2rem;
+}
+.upcoming-row .up-badge.today { color: white; background: var(--accent); }
+.upcoming-row .up-badge small { display:block; font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,0.75); }
+.upcoming-empty { padding: 1.1rem 1.25rem; background: var(--surface); color: var(--text3); font-size: 0.8rem; text-align: center; border-radius: 0; box-shadow: 0 1px 3px rgba(43,41,36,0.05); }
+@media(max-width:600px){ .upcoming-row { grid-template-columns: auto 1fr 1fr; } .upcoming-row > *:nth-child(4) { display:none; } }
+
+/* CALENDAR */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(43,41,36,0.05);
+}
+.cal-dow {
+  background: var(--surface2);
+  padding: 0.5rem 0.4rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-align: center;
+}
+.cal-cell {
+  background: var(--surface);
+  min-height: 84px;
+  padding: 0.4rem;
+  position: relative;
+}
+.cal-cell.empty { background: var(--surface2); }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal-daynum {
+  font-family: 'Lora', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text3);
+  margin-bottom: 0.25rem;
+}
+.cal-cell.today .cal-daynum { color: var(--accent); }
+.cal-bill {
+  font-size: 0.58rem;
+  background: var(--surface2);
+  border-left: 3px solid var(--blue);
+  padding: 0.15rem 0.3rem;
+  margin-bottom: 0.2rem;
+  border-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-bill.debt   { border-left-color: var(--accent); }
+.cal-bill.sub    { border-left-color: var(--purple); }
+.cal-bill.rent   { border-left-color: var(--gold); }
+.cal-day-total {
+  position: absolute;
+  bottom: 2px; right: 4px;
+  font-size: 0.55rem;
+  color: var(--text3);
+  font-weight: 600;
+}
+@media(max-width:650px){
+  .cal-cell { min-height: 60px; padding: 0.25rem; }
+  .cal-bill { font-size: 0.5rem; }
+}
 
 /* RESPONSIVE */
 @media(max-width:700px){
@@ -643,7 +757,7 @@ canvas { width: 100% !important; }
 
 <header class="header">
   <div class="header-left">
-    <span class="logo">RECOVERY//DASH</span>
+    <span class="logo">Financial Dashboard</span>
     <span class="header-date" id="headerDate"></span>
   </div>
   <div class="header-right">
@@ -658,6 +772,7 @@ canvas { width: 100% !important; }
   <button onclick="show('budget',this)">Budget</button>
   <button onclick="show('payoff',this)">Payoff Plan</button>
   <button onclick="show('log',this)">Monthly Log</button>
+  <button onclick="show('calendar',this)">Calendar</button>
   <button onclick="show('notion',this)">⚙ Notion Setup</button>
 </nav>
 
@@ -666,6 +781,8 @@ canvas { width: 100% !important; }
 <!-- OVERVIEW -->
 <section id="overview" class="active">
   <div class="stat-grid" id="overviewStats"></div>
+
+  <div id="upcomingPanelWrap"></div>
 
   <div class="sec-header">
     <span class="sec-title">Debt Snapshot</span>
@@ -738,16 +855,16 @@ canvas { width: 100% !important; }
   <div class="alloc-bar-wrap">
     <div class="alloc-bar-label">Income Allocation</div>
     <div class="alloc-bar" id="allocBar">
-      <div class="alloc-seg" style="background:#b8860b;" id="seg-needs">Needs</div>
-      <div class="alloc-seg" style="background:#c84b2f;" id="seg-debt">Debt</div>
-      <div class="alloc-seg" style="background:#1e6091;" id="seg-save">Save</div>
-      <div class="alloc-seg" style="background:#3a6b50;" id="seg-wants">Wants</div>
+      <div class="alloc-seg" style="background:#c9a25f;" id="seg-needs">Needs</div>
+      <div class="alloc-seg" style="background:#d98e6f;" id="seg-debt">Debt</div>
+      <div class="alloc-seg" style="background:#7a9bb0;" id="seg-save">Save</div>
+      <div class="alloc-seg" style="background:#6f8f6a;" id="seg-wants">Wants</div>
     </div>
     <div class="alloc-legend">
-      <span class="al-item"><span class="al-dot" style="background:#b8860b;"></span>Needs <span id="leg-needs" style="margin-left:.3rem;"></span></span>
-      <span class="al-item"><span class="al-dot" style="background:#c84b2f;"></span>Debt <span id="leg-debt" style="margin-left:.3rem;"></span></span>
-      <span class="al-item"><span class="al-dot" style="background:#1e6091;"></span>Savings <span id="leg-save" style="margin-left:.3rem;"></span></span>
-      <span class="al-item"><span class="al-dot" style="background:#3a6b50;"></span>Wants <span id="leg-wants" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#c9a25f;"></span>Needs <span id="leg-needs" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#d98e6f;"></span>Debt <span id="leg-debt" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#7a9bb0;"></span>Savings <span id="leg-save" style="margin-left:.3rem;"></span></span>
+      <span class="al-item"><span class="al-dot" style="background:#6f8f6a;"></span>Wants <span id="leg-wants" style="margin-left:.3rem;"></span></span>
       <span class="al-item" id="leg-surplus"></span>
     </div>
   </div>
@@ -798,14 +915,14 @@ canvas { width: 100% !important; }
     </div>
   </div>
 
-  <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+  <div class="budget-section" style="padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
     <div>
       <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Monthly Take-Home</div>
-      <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);">$3,355.60</div>
+      <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:var(--text);">$3,355.60</div>
     </div>
     <div style="text-align:right;">
       <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Remaining / Shortfall</div>
-      <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;" id="budget-remaining">—</div>
+      <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;" id="budget-remaining">—</div>
     </div>
   </div>
 
@@ -838,11 +955,11 @@ canvas { width: 100% !important; }
       </div>
       <div>
         <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Extra Amount</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--accent);" id="extraPayDisplay">$400</div>
+        <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:var(--accent);" id="extraPayDisplay">$400</div>
       </div>
       <div>
         <div style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:0.3rem;">Total to Debt/Mo</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);" id="totalPayDisplay">—</div>
+        <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;color:var(--text);" id="totalPayDisplay">—</div>
       </div>
     </div>
   </div>
@@ -903,6 +1020,32 @@ canvas { width: 100% !important; }
   </div>
 </section>
 
+<!-- CALENDAR -->
+<section id="calendar">
+  <div class="sec-header">
+    <span class="sec-title">Recurring Payments Calendar</span>
+    <span class="sec-sub" id="calMonthLabel"></span>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <button class="edit-balance-btn" onclick="calShiftMonth(-1)">‹ Prev</button>
+    <div style="font-family:'Lora',serif;font-weight:700;font-size:0.95rem;" id="calTitle"></div>
+    <button class="edit-balance-btn" onclick="calShiftMonth(1)">Next ›</button>
+  </div>
+
+  <div class="cal-grid" id="calGrid"></div>
+
+  <div class="sec-header" style="margin-top:1.75rem;">
+    <span class="sec-title">This Month's Bills</span>
+    <span class="sec-sub">Sorted by due date</span>
+  </div>
+  <div class="debt-list" id="calList"></div>
+
+  <div class="callout" style="margin-top:1.5rem;">
+    <strong>Heads up:</strong> SoFi and Student Loan due dates are marked "TBD" pending your refinances. Once those are finalized, let me know the new dates and I'll add them to the calendar.
+  </div>
+</section>
+
 <!-- NOTION SETUP -->
 <section id="notion">
   <div class="sec-header">
@@ -930,18 +1073,22 @@ canvas { width: 100% !important; }
   <div class="notion-panel">
     <h3>🔑 Database IDs</h3>
     <p>Your Notion token is stored in Netlify, not here. Just save your database IDs below.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
       <div>
         <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Debts Database ID</label>
-        <input type="text" id="debtsDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+        <input type="text" id="debtsDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.75rem;width:100%;outline:none;">
       </div>
       <div>
         <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Monthly Log Database ID</label>
-        <input type="text" id="logDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+        <input type="text" id="logDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.75rem;width:100%;outline:none;">
       </div>
       <div>
         <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Budget Database ID</label>
-        <input type="text" id="budgetDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.75rem;width:100%;outline:none;">
+        <input type="text" id="budgetDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.75rem;width:100%;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:0.4rem;">Recurring Payments Database ID</label>
+        <input type="text" id="recurringDbId" placeholder="32-character database ID" style="background:var(--surface3);border:1px solid var(--border2);color:var(--text);padding:0.5rem 0.75rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.75rem;width:100%;outline:none;">
       </div>
     </div>
     <button class="submit-btn" onclick="saveNotionConfig()">Save Database IDs</button>
@@ -974,11 +1121,11 @@ const BUDGET_DEFAULT = {
   needs: [
     { name:'Rent',                    amount:943.00 },
     { name:'Groceries',               amount:215.00 },
-    { name:'Gas / Transportation',    amount:80.00  },
-    { name:'Utilities (Gas / Water)', amount:145.00 },
+    { name:'Gas',                     amount:80.00  },
+    { name:'Utilities',               amount:145.00 },
     { name:'Electric',                amount:60.00  },
     { name:'Internet',                amount:30.60  },
-    { name:'Health (Prescriptions)',  amount:20.00  },
+    { name:'Health / Prescriptions',  amount:20.00  },
     { name:'Personal Care & Hygiene', amount:30.00  },
   ],
   debt: [
@@ -987,16 +1134,36 @@ const BUDGET_DEFAULT = {
     { name:'Citi Card (min)',              amount:130.37 },
     { name:'Apple Card (min)',             amount:130.00 },
     { name:'Student Loans',               amount:166.76 },
-    { name:'Extra Debt Payment (Citi)',   amount:400.00 },
+    { name:'Extra Debt Payment (Citi)',   amount:311.51 },
   ],
   save: [
     { name:'Emergency Fund', amount:50.00 },
   ],
   wants: [
-    { name:'Restaurants & Entertainment', amount:50.00 },
-    { name:'Personal / Misc',             amount:25.36 },
+    { name:'Subscriptions',               amount:103.85 },
+    { name:'Restaurants & Entertainment', amount:40.00  },
+    { name:'Miscellaneous',               amount:20.00  },
   ],
 };
+
+// Recurring bills with day-of-month due dates. day:null means TBD.
+const RECURRING_DEFAULT = [
+  { name:'Rent (1/2)',        amount:549.44, day:1,    type:'rent' },
+  { name:'Rent (2/2)',        amount:549.44, day:18,   type:'rent' },
+  { name:'Hulu',               amount:21.86,  day:4,    type:'sub' },
+  { name:'Internet',           amount:30.60,  day:6,    type:'bill' },
+  { name:'Amazon Prime',       amount:14.99,  day:6,    type:'sub' },
+  { name:'Kikoff',              amount:5.00,   day:15,   type:'sub' },
+  { name:'Citi Card',          amount:130.37, day:17,   type:'debt' },
+  { name:'Energy',             amount:60.00,  day:18,   type:'bill' },
+  { name:'YouTube Premium',    amount:19.00,  day:22,   type:'sub' },
+  { name:'Kagi',                amount:10.00,  day:29,   type:'sub' },
+  { name:'Adobe',              amount:33.00,  day:30,   type:'sub' },
+  { name:'SoFi Personal Loan', amount:355.51, day:null, type:'debt' },
+  { name:'Discover Card',      amount:524.00, day:null, type:'debt' },
+  { name:'Apple Card',         amount:130.00, day:null, type:'debt' },
+  { name:'Student Loans',      amount:166.76, day:null, type:'debt' },
+];
 
 // =====================================================================
 // STATE
@@ -1004,6 +1171,7 @@ const BUDGET_DEFAULT = {
 let debts  = JSON.parse(localStorage.getItem('fd_debts')  || 'null') || JSON.parse(JSON.stringify(DEBTS_DEFAULT));
 let budget = JSON.parse(localStorage.getItem('fd_budget') || 'null') || JSON.parse(JSON.stringify(BUDGET_DEFAULT));
 let logs   = JSON.parse(localStorage.getItem('fd_logs')   || '[]');
+let recurringPayments = JSON.parse(localStorage.getItem('fd_recurring') || 'null') || JSON.parse(JSON.stringify(RECURRING_DEFAULT));
 let notionConfig = JSON.parse(localStorage.getItem('fd_notion') || '{}');
 
 function saveState() {
@@ -1023,8 +1191,9 @@ function show(id, btn) {
   if(id==='overview') renderOverview();
   if(id==='debts') renderDebtDetail();
   if(id==='budget') renderBudget();
-  if(id==='payoff') { renderPayoff(); updatePayoff(); }
+  if(id==='payoff') updatePayoff();
   if(id==='log') renderLog();
+  if(id==='calendar') renderCalendar();
 }
 
 // =====================================================================
@@ -1067,6 +1236,8 @@ function renderOverview() {
     </div>
   `;
 
+  renderUpcomingPanel();
+
   const sorted = [...debts].sort((a,b)=>a.priority-b.priority);
   document.getElementById('overviewDebtRows').innerHTML = sorted.map(d=>{
     const paidPct = Math.max(0, Math.min(100, (1-(d.balance/d.original))*100));
@@ -1102,7 +1273,7 @@ function renderDebtDetail() {
     const rateClass = d.rate>=20?'high-rate':d.rate>=10?'med-rate':'low-rate';
     return `
     <div class="debt-row">
-      <div class="debt-name"><span class="priority-dot ${dotClass}"></span>${d.name}<br><span style="font-family:'DM Mono';font-size:0.65rem;font-weight:400;color:var(--text3);">${d.type}</span></div>
+      <div class="debt-name"><span class="priority-dot ${dotClass}"></span>${d.name}<br><span style="font-family:'Plus Jakarta Sans';font-size:0.65rem;font-weight:400;color:var(--text3);">${d.type}</span></div>
       <div>
         <div id="bal-display-${d.id}" class="debt-balance" style="cursor:pointer;" onclick="editBalance('${d.id}')">${fmt(d.balance)}</div>
         <input id="bal-input-${d.id}" class="balance-input" style="display:none;" type="number" value="${d.balance}" onblur="saveBalance('${d.id}')" onkeydown="if(event.key==='Enter')saveBalance('${d.id}')">
@@ -1267,21 +1438,21 @@ function drawChart(data) {
   const pts = data.filter((_,i)=>i%step===0);
 
   // grid
-  ctx.strokeStyle = '#2a2f3d';
+  ctx.strokeStyle = '#e8e2d3';
   ctx.lineWidth = 1;
   for(let i=0;i<=4;i++) {
     const y = pad.top + cH*(1-i/4);
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cW,y); ctx.stroke();
-    ctx.fillStyle = '#5c6275';
-    ctx.font = '10px DM Mono, monospace';
+    ctx.fillStyle = '#a39b8a';
+    ctx.font = '10px Plus Jakarta Sans, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('$'+(max*(i/4)/1000).toFixed(0)+'K', pad.left-6, y+4);
   }
 
   // line
   const grad = ctx.createLinearGradient(0,pad.top,0,pad.top+cH);
-  grad.addColorStop(0,'rgba(232,97,58,0.6)');
-  grad.addColorStop(1,'rgba(232,97,58,0.0)');
+  grad.addColorStop(0,'rgba(217,142,111,0.45)');
+  grad.addColorStop(1,'rgba(217,142,111,0.0)');
 
   ctx.beginPath();
   pts.forEach((v,i)=>{
@@ -1289,7 +1460,7 @@ function drawChart(data) {
     const y = pad.top + cH*(1-v/max);
     i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
   });
-  ctx.strokeStyle = 'var(--accent)';
+  ctx.strokeStyle = '#d98e6f';
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -1301,7 +1472,7 @@ function drawChart(data) {
   ctx.fill();
 
   // x labels
-  ctx.fillStyle = '#5c6275';
+  ctx.fillStyle = '#a39b8a';
   ctx.textAlign = 'center';
   const now = new Date();
   [0, 0.25, 0.5, 0.75, 1].forEach(p => {
@@ -1350,12 +1521,146 @@ function deleteLog(i) {
 }
 
 // =====================================================================
+// UPCOMING PAYMENTS (shared helper)
+// =====================================================================
+// Returns the number of days from today until this bill's next occurrence (0 = today, can wrap to next month)
+function daysUntilDue(day) {
+  if(day == null) return Infinity;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let target = new Date(today.getFullYear(), today.getMonth(), day);
+  if(target < today) target = new Date(today.getFullYear(), today.getMonth()+1, day);
+  return Math.round((target - today) / 86400000);
+}
+
+function renderUpcomingPanel() {
+  const upcoming = recurringPayments
+    .filter(b => b.day != null)
+    .map(b => ({ ...b, daysUntil: daysUntilDue(b.day) }))
+    .filter(b => b.daysUntil <= 7)
+    .sort((a,b) => a.daysUntil - b.daysUntil);
+
+  const wrap = document.getElementById('upcomingPanelWrap');
+  if(!wrap) return;
+
+  if(!upcoming.length) {
+    wrap.innerHTML = `
+      <div class="sec-header"><span class="sec-title">Upcoming Payments</span><span class="sec-sub">Next 7 days</span></div>
+      <div class="upcoming-wrap"><div class="upcoming-empty">Nothing due in the next 7 days.</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="sec-header"><span class="sec-title">Upcoming Payments</span><span class="sec-sub">Next 7 days</span></div>
+    <div class="upcoming-wrap"><div class="upcoming-list">
+      ${upcoming.map(b => {
+        const isToday = b.daysUntil === 0;
+        const label = isToday ? 'Today' : b.daysUntil === 1 ? 'Tomorrow' : `${b.daysUntil} days`;
+        const typeColor = b.type==='debt'?'var(--accent)':b.type==='rent'?'var(--gold)':b.type==='sub'?'var(--purple)':'var(--blue)';
+        return `<div class="upcoming-row">
+          <div class="up-badge ${isToday?'today':''}">${isToday?'!':b.daysUntil}<small>${isToday?'':'day'+(b.daysUntil===1?'':'s')}</small></div>
+          <div class="debt-name">${b.name}</div>
+          <div class="debt-balance">${fmt(b.amount)}</div>
+          <div><span class="debt-rate" style="color:${typeColor};">${label} · ${ordinal(b.day)}</span></div>
+        </div>`;
+      }).join('')}
+    </div></div>`;
+}
+
+// =====================================================================
+// CALENDAR
+// =====================================================================
+let calDate = new Date();
+
+function calShiftMonth(delta) {
+  calDate.setMonth(calDate.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  const monthName = calDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('calTitle').textContent = monthName;
+  document.getElementById('calMonthLabel').textContent = 'Tap a day to see details';
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear()===year && today.getMonth()===month;
+
+  // Map day-of-month -> bills
+  const billsByDay = {};
+  recurringPayments.forEach(b => {
+    if(b.day == null) return;
+    if(b.day > daysInMonth) return;
+    (billsByDay[b.day] = billsByDay[b.day] || []).push(b);
+  });
+
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  for(let i=0;i<firstDay;i++) html += `<div class="cal-cell empty"></div>`;
+
+  for(let day=1; day<=daysInMonth; day++) {
+    const bills = billsByDay[day] || [];
+    const total = bills.reduce((s,b)=>s+b.amount,0);
+    const isToday = isCurrentMonth && today.getDate()===day;
+    html += `<div class="cal-cell ${isToday?'today':''}">
+      <div class="cal-daynum">${day}</div>
+      ${bills.map(b=>`<div class="cal-bill ${b.type}" title="${b.name} — ${fmt(b.amount)}">${b.name}</div>`).join('')}
+      ${total>0?`<div class="cal-day-total">${fmt(total)}</div>`:''}
+    </div>`;
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+
+  // This month's bill list, sorted by day (TBD items last)
+  const sorted = [...recurringPayments].sort((a,b) => {
+    const da = daysUntilDue(a.day), db = daysUntilDue(b.day);
+    return da - db;
+  });
+  const monthTotal = recurringPayments.reduce((s,b)=>s+b.amount,0);
+
+  document.getElementById('calList').innerHTML =
+    `<div class="debt-row header-row"><span>Bill</span><span>Amount</span><span>Due</span><span>Type</span><span></span><span></span></div>` +
+    sorted.map(b => {
+      const typeColor = b.type==='debt'?'var(--accent)':b.type==='rent'?'var(--gold)':b.type==='sub'?'var(--purple)':'var(--blue)';
+      let dueLabel;
+      if(b.day == null) {
+        dueLabel = '<span style="color:var(--text3);">TBD</span>';
+      } else {
+        const du = daysUntilDue(b.day);
+        const rel = du===0?'Today':du===1?'Tomorrow':`in ${du}d`;
+        dueLabel = `${ordinal(b.day)} <span style="color:var(--text3);font-size:0.65rem;">(${rel})</span>`;
+      }
+      return `<div class="debt-row">
+        <div class="debt-name">${b.name}</div>
+        <div class="debt-balance">${fmt(b.amount)}</div>
+        <div class="debt-payment">${dueLabel}</div>
+        <div><span class="debt-rate" style="color:${typeColor};border-left:2px solid ${typeColor};">${b.type}</span></div>
+        <div></div><div></div>
+      </div>`;
+    }).join('') +
+    `<div class="debt-row" style="font-family:'Lora',serif;font-weight:700;background:var(--surface2);">
+      <div>Monthly Total</div><div>${fmt(monthTotal)}</div><div></div><div></div><div></div><div></div>
+    </div>`;
+}
+
+function ordinal(n) {
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+// =====================================================================
 // NOTION SYNC
 // =====================================================================
 function saveNotionConfig() {
   notionConfig.debtsDb = document.getElementById('debtsDbId').value.trim();
   notionConfig.logDb = document.getElementById('logDbId').value.trim();
   notionConfig.budgetDb = document.getElementById('budgetDbId').value.trim();
+  notionConfig.recurringDb = document.getElementById('recurringDbId').value.trim();
   localStorage.setItem('fd_notion', JSON.stringify(notionConfig));
   alert('Configuration saved. Click "Sync Notion" in the top bar to pull your data.');
 }
@@ -1385,7 +1690,7 @@ function findBudgetItem(category) {
 }
 
 async function syncNotion() {
-  if(!notionConfig.debtsDb && !notionConfig.budgetDb && !notionConfig.logDb) {
+  if(!notionConfig.debtsDb && !notionConfig.budgetDb && !notionConfig.logDb && !notionConfig.recurringDb) {
     alert('Please add at least one Notion database ID in the Notion Setup tab first.');
     return;
   }
@@ -1396,6 +1701,7 @@ async function syncNotion() {
     if(notionConfig.debtsDb)  databaseIds.debts  = notionConfig.debtsDb;
     if(notionConfig.budgetDb) databaseIds.budget = notionConfig.budgetDb;
     if(notionConfig.logDb)    databaseIds.log    = notionConfig.logDb;
+    if(notionConfig.recurringDb) databaseIds.recurring = notionConfig.recurringDb;
 
     const res = await fetch('/.netlify/functions/notion-proxy', {
       method: 'POST',
@@ -1459,6 +1765,18 @@ async function syncNotion() {
       if(newLogs.length) logs = newLogs;
     }
 
+    // ---- RECURRING PAYMENTS ----
+    if(results.recurring) {
+      const newRecurring = results.recurring.map(page => {
+        const name = page.properties['Name']?.title?.[0]?.plain_text || '';
+        const amount = page.properties['Amount']?.number || 0;
+        const day = page.properties['Day of Month']?.number ?? null;
+        const type = page.properties['Type']?.select?.name || 'bill';
+        return { name, amount, day, type };
+      }).filter(b => b.name);
+      if(newRecurring.length) recurringPayments = newRecurring;
+    }
+
     saveState();
 
     const errKeys = Object.keys(errors || {});
@@ -1476,6 +1794,7 @@ async function syncNotion() {
     setTimeout(()=>{ btn.textContent='↻ Sync Notion'; btn.className='sync-btn'; }, 3000);
 
     renderOverview(); renderDebtDetail(); renderBudget(); renderLog();
+    if(document.getElementById('calendar')?.classList.contains('active')) renderCalendar();
     if(errKeys.length) alert('Synced with some issues: ' + errKeys.map(k=>k+': '+errors[k]).join('; '));
   } catch(e) {
     btn.textContent = '↻ Sync Notion';
@@ -1493,8 +1812,14 @@ document.getElementById('log-month').value = new Date().toISOString().slice(0,7)
 if(notionConfig.debtsDb) document.getElementById('debtsDbId').value = notionConfig.debtsDb;
 if(notionConfig.logDb) document.getElementById('logDbId').value = notionConfig.logDb;
 if(notionConfig.budgetDb) document.getElementById('budgetDbId').value = notionConfig.budgetDb;
+if(notionConfig.recurringDb) document.getElementById('recurringDbId').value = notionConfig.recurringDb;
 
 renderOverview();
+
+// Auto-sync with Notion on page load, if configured
+if(notionConfig.debtsDb || notionConfig.budgetDb || notionConfig.logDb || notionConfig.recurringDb) {
+  syncNotion();
+}
 </script>
 </body>
 </html>
