@@ -1178,25 +1178,11 @@ const RECURRING_DEFAULT = [
 // STATE
 // =====================================================================
 let debts  = JSON.parse(localStorage.getItem('fd_debts')  || 'null') || JSON.parse(JSON.stringify(DEBTS_DEFAULT));
-let budget = (function() {
-  const saved = JSON.parse(localStorage.getItem('fd_budget') || 'null');
-  if(!saved) return JSON.parse(JSON.stringify(BUDGET_DEFAULT));
-  // Merge: for each category, keep saved items, and only add default items
-  // that don't fuzzy-match any existing saved item (handles renames like
-  // "Gas / Transportation" -> "Gas" or "Extra Debt Payment (Citi)" -> "Extra Debt Payment -> Citi")
-  const norm = s => s.toLowerCase().replace(/\(.*?\)/g,'').replace(/[\u2192].*$/g,'').replace(/[^a-z0-9 ]/g,'').trim();
-  const merged = {};
-  for(const cat of Object.keys(BUDGET_DEFAULT)) {
-    const savedItems = saved[cat] || [];
-    const savedNorms = savedItems.map(i => norm(i.name));
-    const newItems = BUDGET_DEFAULT[cat].filter(d => {
-      const dn = norm(d.name);
-      return !savedNorms.some(sn => sn === dn || sn.split(' ')[0] === dn.split(' ')[0]);
-    });
-    merged[cat] = [...savedItems, ...newItems.map(i => ({...i}))];
-  }
-  return merged;
-})();
+// Budget is loaded as-is from localStorage (which mirrors Notion exactly
+// after a sync). No merging with BUDGET_DEFAULT happens here -- Notion is
+// the single source of truth for budget contents. BUDGET_DEFAULT is only
+// used the very first time, before any Notion sync has ever happened.
+let budget = JSON.parse(localStorage.getItem('fd_budget') || 'null') || JSON.parse(JSON.stringify(BUDGET_DEFAULT));
 let logs   = JSON.parse(localStorage.getItem('fd_logs')   || '[]');
 let recurringPayments = JSON.parse(localStorage.getItem('fd_recurring') || 'null') || JSON.parse(JSON.stringify(RECURRING_DEFAULT));
 let notionConfig = JSON.parse(localStorage.getItem('fd_notion') || '{}');
@@ -1764,14 +1750,21 @@ async function syncNotion() {
     }
 
     // ---- BUDGET ----
+    // Notion is the single source of truth: replace the entire budget
+    // structure with what's in the database, grouped by Type. This avoids
+    // any duplicate accumulation from renamed/re-added categories.
     if(results.budget) {
+      const TYPE_TO_CAT = { 'Needs':'needs', 'Debt':'debt', 'Savings':'save', 'Wants':'wants' };
+      const newBudget = { needs:[], debt:[], save:[], wants:[] };
       results.budget.forEach(page => {
         const category = page.properties['Category']?.title?.[0]?.plain_text || '';
         const amount   = page.properties['Amount']?.number;
-        if(!category || amount == null) return;
-        const item = findBudgetItem(category);
-        if(item) item.amount = amount;
+        const type     = page.properties['Type']?.select?.name || '';
+        const cat = TYPE_TO_CAT[type];
+        if(!category || amount == null || !cat) return;
+        newBudget[cat].push({ name: category, amount });
       });
+      if(Object.values(newBudget).some(arr => arr.length)) budget = newBudget;
     }
 
     // ---- MONTHLY LOG ----
