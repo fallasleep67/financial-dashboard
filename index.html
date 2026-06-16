@@ -1462,16 +1462,37 @@ function drawChart(data) {
 // =====================================================================
 // LOG
 // =====================================================================
-function addLog() {
+async function addLog() {
   const month = document.getElementById('log-month').value;
   const hiDebt = parseFloat(document.getElementById('log-hiDebt').value)||0;
   const extra = parseFloat(document.getElementById('log-extra').value)||0;
   const side = parseFloat(document.getElementById('log-side').value)||0;
   if(!month) { alert('Please select a month'); return; }
-  logs.push({ month, hiDebt, extra, side });
+  const entry = { month, hiDebt, extra, side };
+  logs.push(entry);
   logs.sort((a,b)=>a.month.localeCompare(b.month));
   saveState();
   renderLog();
+  // Create page in Notion and store its ID for future deletes
+  try {
+    const res = await fetch('/.netlify/functions/notion-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ create: {
+        databaseId: notionConfig.logDb,
+        properties: {
+          'Month':                  month,
+          'Total Hi-Interest Debt': hiDebt,
+          'Extra Payment':          extra,
+          'Side Income':            side,
+        }
+      }}),
+    });
+    if(res.ok) {
+      const { created } = await res.json();
+      if(created?.pageId) { entry.notionPageId = created.pageId; saveState(); }
+    }
+  } catch(e) { console.warn('Log create in Notion failed:', e); }
 }
 
 function renderLog() {
@@ -1492,8 +1513,21 @@ function renderLog() {
   }).reverse().join('');
 }
 
-function deleteLog(i) {
-  if(confirm('Remove this entry?')) { logs.splice(i,1); saveState(); renderLog(); }
+async function deleteLog(i) {
+  if(!confirm('Remove this entry?')) return;
+  const entry = logs[i];
+  logs.splice(i, 1);
+  saveState();
+  renderLog();
+  if(entry?.notionPageId) {
+    try {
+      await fetch('/.netlify/functions/notion-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archive: [entry.notionPageId] }),
+      });
+    } catch(e) { console.warn('Log archive in Notion failed:', e); }
+  }
 }
 
 // =====================================================================
@@ -1756,7 +1790,7 @@ async function syncNotion() {
         const hiDebt = page.properties['Total Hi-Interest Debt']?.number || 0;
         const extra  = page.properties['Extra Payment']?.number || 0;
         const side   = page.properties['Side Income']?.number || 0;
-        return { month, hiDebt, extra, side };
+        return { month, hiDebt, extra, side, notionPageId: page.id };
       }).filter(l => l.month);
       newLogs.sort((a,b) => {
         const da = new Date(a.month), db = new Date(b.month);
