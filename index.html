@@ -1481,7 +1481,7 @@ async function addLog() {
       body: JSON.stringify({ create: {
         databaseId: notionConfig.logDb,
         properties: {
-          'Month':                  month,
+          'Month':                  { title: month },
           'Total Hi-Interest Debt': hiDebt,
           'Extra Payment':          extra,
           'Side Income':            side,
