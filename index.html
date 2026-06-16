@@ -1510,7 +1510,7 @@ function daysUntilDue(day) {
 
 function renderUpcomingPanel() {
   const upcoming = recurringPayments
-    .filter(b => b.day != null)
+    .filter(b => b.day != null && !b.paid)
     .map(b => ({ ...b, daysUntil: daysUntilDue(b.day) }))
     .filter(b => b.daysUntil <= 7)
     .sort((a,b) => a.daysUntil - b.daysUntil);
