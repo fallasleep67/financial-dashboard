@@ -1799,8 +1799,10 @@ renderOverview();
   const thisMonth = new Date().toISOString().slice(0, 7); // "2026-06"
   const lastReset = localStorage.getItem('fd_paid_reset_month');
   if (lastReset !== thisMonth) {
+    // Save the guard immediately so a failed/empty response never re-triggers
+    // the reset on the next page load within the same month.
+    localStorage.setItem('fd_paid_reset_month', thisMonth);
     try {
-      // Fetch all recurring payment page IDs, then patch Paid = false on each
       const res = await fetch('/.netlify/functions/notion-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1815,7 +1817,6 @@ renderOverview();
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ patch: pageIds.map(id => ({ pageId: id, properties: { Paid: false } })) }),
           });
-          localStorage.setItem('fd_paid_reset_month', thisMonth);
         }
       }
     } catch(e) { console.warn('Monthly Paid reset failed:', e); }
