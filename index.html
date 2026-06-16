@@ -633,6 +633,7 @@ canvas { width: 100% !important; }
 }
 .badge.connected { background: #e2eedd; color: var(--green2); }
 .badge.disconnected { background: #fbe3d8; color: #a85a3a; }
+.badge.saving { background: #f3efe4; color: var(--text2); }
 
 /* CALLOUT */
 .callout {
@@ -1646,14 +1647,33 @@ function ordinal(n) {
 
 // patchNotion: send property updates to one or more Notion pages via proxy.
 // patches = [{ pageId, properties: { 'Balance': 1234.56, 'Paid': true } }]
+// Shows ↑ Saving… in the badge while in flight, then restores to last sync state.
+let _lastSyncBadge = { text: '● Notion Not Connected', cls: 'badge disconnected' };
+let _saveTimer = null;
 async function patchNotion(patches) {
+  const badge = document.getElementById('notionBadge');
+  badge.textContent = '↑ Saving…';
+  badge.className = 'badge saving';
   try {
-    await fetch('/.netlify/functions/notion-proxy', {
+    const res = await fetch('/.netlify/functions/notion-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ patch: patches }),
     });
-  } catch(e) { console.warn('Notion patch failed:', e); }
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    badge.textContent = '↑ Saved';
+    badge.className = 'badge connected';
+  } catch(e) {
+    badge.textContent = '↑ Save failed';
+    badge.className = 'badge disconnected';
+    console.warn('Notion patch failed:', e);
+  }
+  // After 2.5s revert to whatever the last sync state was
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    badge.textContent = _lastSyncBadge.text;
+    badge.className = _lastSyncBadge.cls;
+  }, 2500);
 }
 
 // Toggle Paid on a recurring payment row both locally and in Notion.
@@ -1763,12 +1783,14 @@ async function syncNotion() {
 
     const errKeys = Object.keys(errors || {});
     if(errKeys.length) {
-      document.getElementById('notionBadge').textContent = '● Partial sync';
-      document.getElementById('notionBadge').className = 'badge disconnected';
+      _lastSyncBadge = { text: '● Partial sync', cls: 'badge disconnected' };
+      document.getElementById('notionBadge').textContent = _lastSyncBadge.text;
+      document.getElementById('notionBadge').className = _lastSyncBadge.cls;
       console.warn('Sync errors:', errors);
     } else {
-      document.getElementById('notionBadge').textContent = '● Synced';
-      document.getElementById('notionBadge').className = 'badge connected';
+      _lastSyncBadge = { text: '● Synced', cls: 'badge connected' };
+      document.getElementById('notionBadge').textContent = _lastSyncBadge.text;
+      document.getElementById('notionBadge').className = _lastSyncBadge.cls;
     }
 
     btn.textContent = '✓ Synced';
