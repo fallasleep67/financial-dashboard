@@ -979,8 +979,8 @@ canvas { width: 100% !important; }
     <canvas id="payoffChart" height="200"></canvas>
   </div>
 
-  <div class="callout green">
-    <strong>The side income multiplier:</strong> Every $300/month from a side hustle = roughly 8 months shaved off your payoff timeline. Every $500/month = over a year faster. The math is unambiguous — extra income at this stage has a higher ROI than almost any financial decision you'll ever make.
+  <div class="callout green" id="payoffCallout">
+    <strong>The side income multiplier:</strong> <span id="calloutBody">Adjust the slider to see the impact of extra payments.</span>
   </div>
 </section>
 
@@ -1344,44 +1344,53 @@ function updateBudgetTotals() {
 // =====================================================================
 let chartInst = null;
 
+// Simulate a true debt avalanche for a given extra monthly payment.
+// Each month: (1) accrue interest on every debt, (2) pay every active debt its
+// minimum (capped at balance), (3) roll all leftover dollars -- the slider extra
+// PLUS any freed/unused minimums from paid-off or nearly-paid debts -- into the
+// highest-interest debt still owed. Returns months, total interest, and the
+// month-by-month total-balance history for the chart.
+function simulatePayoff(extra) {
+  const hiDebts = debts.filter(d=>d.type!=='Student Loan');
+  const totalMin = hiDebts.reduce((s,d)=>s+d.minPayment,0);
+  const sim = hiDebts.map(d=>({...d})).sort((a,b)=>b.rate-a.rate);
+  let months = 0, totalInterest = 0;
+  const balHistory = [sim.reduce((s,d)=>s+d.balance,0)];
+
+  while(sim.some(d=>d.balance>0) && months < 600) {
+    months++;
+    // 1) accrue interest
+    for(const d of sim) {
+      if(d.balance<=0) continue;
+      const interest = d.balance * d.rate/100/12;
+      totalInterest += interest;
+      d.balance += interest;
+    }
+    // available = slider extra + ALL minimums (freed minimums stay in the pool)
+    let available = extra + totalMin;
+    // 2) every active debt pays at least its minimum (capped at balance)
+    for(const d of sim) {
+      if(d.balance<=0) continue;
+      const pay = Math.min(d.minPayment, d.balance, available);
+      d.balance -= pay; available -= pay;
+    }
+    // 3) avalanche: throw everything left at the highest-rate active debt, cascading down
+    for(const d of sim) {
+      if(d.balance<=0 || available<=0) continue;
+      const pay = Math.min(available, d.balance);
+      d.balance -= pay; available -= pay;
+    }
+    balHistory.push(Math.max(0, sim.reduce((s,d)=>s+d.balance,0)));
+  }
+  return { months, totalInterest, totalMin, balHistory };
+}
+
 function updatePayoff() {
   const extra = parseInt(document.getElementById('extraPayRange')?.value||0);
   document.getElementById('extraPayDisplay').textContent = '$'+extra;
 
-  const hiDebts = debts.filter(d=>d.type!=='Student Loan');
-  const totalMin = hiDebts.reduce((s,d)=>s+d.minPayment,0);
+  const { months, totalInterest, totalMin, balHistory } = simulatePayoff(extra);
   document.getElementById('totalPayDisplay').textContent = fmt(totalMin+extra);
-
-  // Simulate avalanche
-  const sim = hiDebts.map(d=>({...d})).sort((a,b)=>b.rate-a.rate);
-  let months = 0;
-  let totalInterest = 0;
-  const balHistory = [sim.reduce((s,d)=>s+d.balance,0)];
-
-  while(sim.some(d=>d.balance>0) && months < 360) {
-    months++;
-    let extraLeft = extra;
-    let monthInterest = 0;
-    sim.forEach(d=>{
-      if(d.balance<=0) return;
-      const interest = d.balance * d.rate/100/12;
-      monthInterest += interest;
-      d.balance += interest;
-      d.balance -= d.minPayment;
-      if(d.balance < 0) d.balance = 0;
-    });
-    totalInterest += monthInterest;
-    // Apply extra to highest rate with balance
-    for(const d of sim) {
-      if(d.balance > 0 && extraLeft > 0) {
-        const pay = Math.min(extraLeft, d.balance);
-        d.balance -= pay;
-        extraLeft -= pay;
-      }
-    }
-    balHistory.push(Math.max(0, sim.reduce((s,d)=>s+d.balance,0)));
-    if(balHistory[balHistory.length-1] <= 0) break;
-  }
 
   const payoffYear = new Date();
   payoffYear.setMonth(payoffYear.getMonth() + months);
@@ -1392,6 +1401,20 @@ function updatePayoff() {
     <div class="tl-item"><div class="tl-item-label">Total Interest Paid</div><div class="tl-item-val" style="color:var(--gold);">${fmtK(totalInterest)}</div><div class="tl-item-sub">Cost of carrying this debt</div></div>
     <div class="tl-item"><div class="tl-item-label">Monthly Freed at Payoff</div><div class="tl-item-val" style="color:var(--green);">${fmt(totalMin)}</div><div class="tl-item-sub">Income reclaimed</div></div>
   `;
+
+  // Dynamic side-income comparison: what does adding $300/mo more do FROM HERE?
+  const bump = 300;
+  const next = simulatePayoff(extra + bump);
+  const monthsSaved = months - next.months;
+  const interestSaved = totalInterest - next.totalInterest;
+  const calloutEl = document.getElementById('calloutBody');
+  if(calloutEl) {
+    if(monthsSaved > 0) {
+      calloutEl.textContent = `From your current $${extra}/mo extra, adding another $${bump}/mo would pay off your high-interest debt about ${monthsSaved} month${monthsSaved===1?'':'s'} sooner and save roughly ${fmtK(interestSaved)} in interest. (Returns diminish as your extra payment grows — the first few hundred dollars a month do the heaviest lifting.)`;
+    } else {
+      calloutEl.textContent = `At $${extra}/mo extra you're already near the fastest realistic payoff — additional payments now mostly just round out the final months.`;
+    }
+  }
 
   drawChart(balHistory);
 }
@@ -1744,26 +1767,46 @@ async function syncNotion() {
     const { results, errors } = await res.json();
 
     // ---- DEBTS ----
+    // Notion is the single source of truth: rebuild the debt list entirely so
+    // deleted/consolidated debts disappear instead of lingering. Preserve each
+    // debt's `original` balance (for the % paid progress bar) by matching the
+    // existing local debt on Notion page id first, then name.
     if(results.debts) {
-      results.debts.forEach(page => {
-        const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
-        const balance = page.properties['Balance']?.number;
-        const rateRaw = page.properties['Interest Rate']?.number;
-        const minPay  = page.properties['Minimum Payment']?.number;
-        if(!name) return;
-        let d = debts.find(x => x.name.toLowerCase() === name.toLowerCase());
-        if(!d) {
-          const firstWord = name.toLowerCase().split(' ')[0];
-          d = debts.find(x => x.name.toLowerCase().split(' ')[0] === firstWord);
-        }
-        if(d) {
-          if(balance != null) d.balance = balance;
-          if(rateRaw != null) d.rate = Math.round((rateRaw <= 1 ? rateRaw * 100 : rateRaw) * 100) / 100;
-          if(minPay != null) d.minPayment = minPay;
-          if(name) d.name = name;
-          d.notionPageId = page.id; // store for two-way writes
-        }
+      const prevById = {}, prevByName = {};
+      debts.forEach(d => {
+        if(d.notionPageId) prevById[d.notionPageId] = d;
+        prevByName[d.name.toLowerCase()] = d;
       });
+      const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+      const newDebts = results.debts.map(page => {
+        const name    = page.properties['Name']?.title?.[0]?.plain_text || '';
+        const balance = page.properties['Balance']?.number ?? 0;
+        const rateRaw = page.properties['Interest Rate']?.number ?? 0;
+        const minPay  = page.properties['Minimum Payment']?.number ?? 0;
+        const type    = page.properties['Type']?.select?.name || 'Credit Card';
+        if(!name) return null;
+        const rate = Math.round((rateRaw <= 1 ? rateRaw * 100 : rateRaw) * 100) / 100;
+        const prev = prevById[page.id] || prevByName[name.toLowerCase()];
+        // original = highest balance ever seen, so % paid never runs backward
+        const original = prev ? Math.max(prev.original || 0, balance) : balance;
+        return {
+          id: prev?.id || slug(name) || page.id.slice(0,8),
+          name, type, balance, original, rate, minPayment: minPay,
+          notionPageId: page.id,
+        };
+      }).filter(Boolean);
+      if(newDebts.length) {
+        // Priority: non-student-loans by rate desc, then student loans by rate desc,
+        // ties broken by smaller balance first (avalanche display order).
+        newDebts.sort((a,b) => {
+          const aStu = a.type==='Student Loan'?1:0, bStu = b.type==='Student Loan'?1:0;
+          if(aStu !== bStu) return aStu - bStu;
+          if(b.rate !== a.rate) return b.rate - a.rate;
+          return a.balance - b.balance;
+        });
+        newDebts.forEach((d,i) => d.priority = i+1);
+        debts = newDebts;
+      }
     }
 
     // ---- BUDGET ----
